@@ -1,0 +1,100 @@
+commands:
+  help
+  list
+  add
+  edit
+  remove
+  send
+
+emotes:
+  amount: 15
+  hug:
+    description: We all just want to cuddle
+    usage: /emote hug <optional reciever>
+    sender:
+    reciever:
+    broadcast: "s &dhugs &fthe thin air"
+  kiss:
+    description: Show your love for someone
+    usage: /emote kiss <optional reciever>
+    sender:
+    reciever:
+    broadcast: 
+  cut:
+    description: Cut yourself. Don't do this too often
+    usage: /emote cut
+    sender:
+    reciever:
+    broadcast: 
+  wave:
+    description: Greet someone
+    usage: /emote wave <optional reciever>
+    sender:
+    reciever:
+    broadcast: 
+  smile:
+    description: Show off that beautiful face
+    usage: /emote smile <optional reciever>
+    sender:
+    reciever:
+    broadcast: 
+  flush:
+    description: Warm up those cheeks
+    usage: /emote flush <optional reciever>
+    sender:
+    reciever:
+    broadcast: 
+  goodbye:
+    description: An easy end to a hard life
+    usage: /emote goodbye
+    sender:
+    reciever:
+    broadcast: 
+  laugh:
+    description: Laugh at someone
+    usage: /emote laugh <optional reciever>
+    sender:
+    reciever:
+    broadcast: 
+  angry:
+    description: Let your rage out
+    usage: /emote angry <optional reciever>
+    sender:
+    reciever:
+    broadcast: 
+  rate:
+    description: Rate someone
+    usage: /emote rate <reciever> <number>
+    sender:
+    reciever:
+    broadcast: 
+  cry:
+    description: Let those emotions out
+    usage: /emote cry
+    sender:
+    reciever:
+    broadcast: 
+  dance:
+    description: Show off your moves!
+    usage: /emote dance <optional reciever>
+    sender:
+    reciever:
+    broadcast: 
+  flirt:
+    description: Sweet talk your way in
+    usage: /emote flirt <optional reciever>
+    sender:
+    reciever:
+    broadcast: 
+  pinch:
+    description: Pinch someone or yourself
+    usage: /emote pinch <optional reciever>
+    sender:
+    reciever:
+    broadcast: 
+  facepalm:
+    description: Slap your face
+    usage: /emote facepalm
+    sender:
+    reciever:
+    broadcast: 

@@ -1,0 +1,8 @@
+main: me.Skimm.chatCommands.Main
+name: chatEmotes
+version: 0.2
+author: Skimm
+
+commands:
+  emote:
+    aliases: e
