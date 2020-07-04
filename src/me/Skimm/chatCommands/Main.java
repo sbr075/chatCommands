@@ -2,46 +2,37 @@ package me.Skimm.chatCommands;
 
 import java.util.ArrayList;
 
-//import org.bukkit.Bukkit;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
+import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
-
 import me.Skimm.chatEmotes.emoteManager;
 
 /*
  * Known issues
- * 1. 
+ * 1. Colour issues on text
+ * 2. New values in edit only supports one word
+ * 3. If values aren't set correctly there are no error message
  */
 
-/* 
- * Emotes
- * 1. Hug
- * 2. Kiss
- * 3. Cut (will do 1 heart of dmg to player)
- * 4. Wave
- * 5. Smile
- * 6. Flush
- * 7. Facepalm
- * 8. Laughing
- * 9. Angry
- * 10. Rating (1-10)
- * 11. Cry
- * 12. Flirt
- * 13. Dance
- * 14. Pinch
- * 15. Goodbye
+/*
+ * TODO
+ * 1. Fix distance messages
  */
 
-public class Main extends JavaPlugin {
+public class Main extends JavaPlugin implements Listener {
 	
 	public emoteManager emote;
 
     @Override
     public void onEnable() {
     	this.emote = new emoteManager(this);
+    	
+    	this.getServer().getPluginManager().registerEvents(this, this);
         // Used during startup and reloads
     }
 
@@ -50,162 +41,210 @@ public class Main extends JavaPlugin {
         // Used during shutdown and reloads
     }
     
-    private boolean msgParser(Player sender, String[] argv, ArrayList<String> emoteInfo) {
-    	//int maxDistance;
-    	//maxDistance = Integer.parseInt(emoteInfo.get(0));
+    private void msgSend(Player sender, String[] argv, String msg, int num) {
+    	Player receiver = null;
+    	if (argv.length >= 3) {
+    		receiver = sender.getServer().getPlayer(argv[2]);
+        	if (receiver == null)
+        		sender.sendMessage("Emote " + argv[1] + " is set up wrong or receiver doesn't exist, use /e edit to fix it");
+    	}
+    	
+    	switch(num) {
+		case 1: // sender
+			sender.sendMessage(msg);
+			break;
+			
+		case 2: // broadcast
+			Bukkit.broadcastMessage(msg);
+			break;
+			
+		case 3: // receiver
+			receiver.sendMessage(msg);
+			break;	
+		}
+    }
+    
+    private boolean msgParser(Player sender, String[] argv, ArrayList<ArrayList<String>> emoteAllInfo) {
+    	int maxDistance, snumArgs, mnumArgs;
+    	maxDistance = Integer.parseInt(emoteAllInfo.get(0).get(0));
+    	snumArgs = Integer.parseInt(emoteAllInfo.get(1).get(0));
+    	mnumArgs = Integer.parseInt(emoteAllInfo.get(2).get(0));
+    	
 
-    	for (int i = 2; i < emoteInfo.size(); i++) {
-    		if (emoteInfo.get(i).equalsIgnoreCase("<BLANK>") || i == 4)
+    	for (int i = 1; i < emoteAllInfo.size(); i++) {
+    		if ((argv.length - 1 ) < Integer.parseInt(emoteAllInfo.get(i).get(0)))
     			continue;
     		
-    		if (i < 4) {
-    			if ((argv.length - 1) > Integer.parseInt(emoteInfo.get(1)) || emoteInfo.get(1).equalsIgnoreCase("<BLANK>"))
+    		for (int j = 1; j < emoteAllInfo.get(i).size(); j++) {
+    			if (emoteAllInfo.get(i).get(j).equalsIgnoreCase("<BLANK>"))
     				continue;
-    		}
-    		else {
-    			if ((argv.length - 1) < Integer.parseInt(emoteInfo.get(4)) || emoteInfo.get(4).equalsIgnoreCase("<BLANKS>"))
-    				break;
-    		}
-    		
-    		String[] tokens = emoteInfo.get(i).split(" ");
+    			
+    			if (snumArgs <= 0 && i == 1) {
+    				continue;
+    			}
+    			else if (mnumArgs <= 0 && i == 2) {
+    				continue;
+    			}
+    			
+    			if ((argv.length - 1) != snumArgs && i == 1) {
+    				continue;
+    			}
+    			else if ((argv.length - 1) != mnumArgs && i == 2) {
+    				continue;
+    			}
 
-        	ArrayList<String> thSplit = new ArrayList<String>();
+    			Player receiver = null;
+    	    	if (argv.length >= 3) {
+    	    		receiver = sender.getServer().getPlayer(argv[2]);
+    	        	if (receiver == null)
+    	        		sender.sendMessage("Emote " + argv[1] + " is set up wrong or receiver doesn't exist, use /e edit to fix it");
+    	    	}
+        		
+    			String msg = "";
+        		String[] tokens = emoteAllInfo.get(i).get(j).split(" ");
 
-        	int sCount, rCount, first;
-        	sCount = rCount = first = 0;
-        	
-        	String tmp = "";
-        	for (String word : tokens) {
-        		if (sCount > 1 || rCount > 1) {
-        			sender.sendMessage(ChatColor.RED + "Message can't have more than one sender/receiver");
-        			return true;
-        		}
-        		
-        		if (word.length() > 1) {
-        			tmp += word + " ";
-        			continue;
-        		}
-        		
-        		if (word.equalsIgnoreCase("s")) {
-        			thSplit.add(tmp);
-        			
-        			tmp = "";
-        			sCount++;
-        			
-        			if (rCount == 0) {
-        				first = 1;
-        			}
-        		}
-        		
-        		else if (word.equalsIgnoreCase("r")) {
-        			thSplit.add(tmp);
-        			
-        			tmp = "";
-        			rCount++;
-        			
-        			if (sCount == 0) {
-        				first = 2;
-        			}
-        		}
-        	}
-        	
-        	if (sCount != 0 || rCount != 0)
-        		thSplit.add(tmp);
-        	
-        	// sCount and rCount is 0 
-        	switch(thSplit.size()) {
-        	case 0:
-        		sender.sendMessage(emoteInfo.get(i));
-        		break;
-        	
-        	// sCount or rCount is 1 
-        	case 2:
-        		if (thSplit.get(0).equalsIgnoreCase("")) { 
-        			switch(sCount) {
-        			case 0:
-        				Player receiver = sender.getServer().getPlayer(argv[1]);
-        				sender.sendMessage(ChatColor.translateAlternateColorCodes('&', receiver.getDisplayName() + " " + thSplit.get(1)));
-        				break;
-        			case 1:
-        				sender.sendMessage(ChatColor.translateAlternateColorCodes('&', sender.getDisplayName() + " " + thSplit.get(1)));
-        				break;
-        			}
-        		}
-        		else if (thSplit.get(1).equalsIgnoreCase("")) { 
-        			switch(sCount) {
-        			case 0:
-        				Player receiver = sender.getServer().getPlayer(argv[1]);
-        				sender.sendMessage(ChatColor.translateAlternateColorCodes('&', thSplit.get(0) + "&f" + receiver.getDisplayName()));
-        				break;
-        			case 1:
-        				sender.sendMessage(ChatColor.translateAlternateColorCodes('&', thSplit.get(0) + "&f" + sender.getDisplayName()));
-        				break;
-        			}
-        		}
-        		else {
-        			switch(sCount) {
-        			case 0:
-        				Player receiver = sender.getServer().getPlayer(argv[1]);
-        				sender.sendMessage(ChatColor.translateAlternateColorCodes('&', thSplit.get(0) + "&f" + receiver.getDisplayName() + thSplit.get(1)));
-        				break;
-        			case 1:
-        				sender.sendMessage(ChatColor.translateAlternateColorCodes('&', thSplit.get(0) + "&f" + sender.getDisplayName() + thSplit.get(1)));
-        				break;
-        			}
-        		}
-        		break;
-        	
-        	// sCount and rCount is 1 
-        	case 3:
-        		Player receiver = sender.getServer().getPlayer(argv[2]);
-        		
-        		if (thSplit.get(0).equalsIgnoreCase("") && thSplit.get(2).equalsIgnoreCase("")) { // start end
-        			switch(first) {
-        			case 1: // s first
-        				sender.sendMessage(ChatColor.translateAlternateColorCodes('&', sender.getDisplayName() + " " + thSplit.get(1) + "&f" + receiver.getDisplayName()));
-        				break;
-        			case 2: // r first
-        				sender.sendMessage(ChatColor.translateAlternateColorCodes('&', receiver.getDisplayName() + " " + thSplit.get(1) + "&f" +  sender.getDisplayName()));
-        				break;
-        			}
-        		}
-        		else if (thSplit.get(0).equalsIgnoreCase("")) { // start middle
-        			switch(first) {
-    	    		case 1: // s first
-    	    			sender.sendMessage(ChatColor.translateAlternateColorCodes('&', sender.getDisplayName() + " " + thSplit.get(1) + "&f" + receiver.getDisplayName()) + " " + thSplit.get(2));
-    					break;
-    				case 2: // r first
-    					sender.sendMessage(ChatColor.translateAlternateColorCodes('&', receiver.getDisplayName() + " " + thSplit.get(1) + "&f" + sender.getDisplayName()) + " " + thSplit.get(2));
-    					break;
-    				}
-        		}
-        		else if (thSplit.get(2).equalsIgnoreCase("")) { // middle end 
-        			switch(first) {
-    	    		case 1: // s first
-    	    			sender.sendMessage(ChatColor.translateAlternateColorCodes('&', thSplit.get(0) + "&f" +  sender.getDisplayName() + thSplit.get(1) + "&f" +  receiver.getDisplayName()));
-    					break;
-    				case 2: // r first
-    					sender.sendMessage(ChatColor.translateAlternateColorCodes('&', thSplit.get(0) + "&f" +  receiver.getDisplayName() + thSplit.get(1) + "&f" +  sender.getDisplayName()));
-    					break;
-    				}
-        		}
-        		else { // middle middle
-        			switch(first) {
-    	    		case 1: // s first
-    	    			sender.sendMessage(ChatColor.translateAlternateColorCodes('&', thSplit.get(0) + "&f" + sender.getDisplayName() + " " + thSplit.get(1) + "&f" + receiver.getDisplayName() + " " + thSplit.get(2)));
-    					break;
-    				case 2: // r first
-    					sender.sendMessage(ChatColor.translateAlternateColorCodes('&', thSplit.get(0) + "&f" + receiver.getDisplayName() + " " + thSplit.get(1) + "&f" + sender.getDisplayName() + " " + thSplit.get(2)));
-    					break;
-    				}
-        		}
-        		
-        		break;
-        		
-        	default:
-        		sender.sendMessage(ChatColor.RED + "Something went wrong! Please report this to the mod author");
-        	}
+            	ArrayList<String> thSplit = new ArrayList<String>();
+
+            	int sCount, rCount, first;
+            	sCount = rCount = first = 0;
+            	
+            	String tmp = "";
+            	for (String word : tokens) {
+            		if (sCount > 1 || rCount > 1) {
+            			sender.sendMessage(ChatColor.RED + "Message can't have more than one sender/receiver");
+            			return true;
+            		}
+            		
+            		if (word.length() > 1) {
+            			tmp += word + " ";
+            			continue;
+            		}
+            		
+            		if (word.equalsIgnoreCase("s")) {
+            			thSplit.add(tmp);
+            			
+            			tmp = "";
+            			sCount++;
+            			
+            			if (rCount == 0) {
+            				first = 1;
+            			}
+            		}
+            		
+            		else if (word.equalsIgnoreCase("r")) {
+            			thSplit.add(tmp);
+            			
+            			tmp = " ";
+            			rCount++;
+            			
+            			if (sCount == 0) {
+            				first = 2;
+            			}
+            		}
+            	}
+            	
+            	if (sCount != 0 || rCount != 0)
+            		thSplit.add(tmp);
+            	
+            	// sCount and rCount is 0
+            	switch(thSplit.size()) {
+            	case 0:
+            		msg = ChatColor.translateAlternateColorCodes('&', emoteAllInfo.get(i).get(j));
+            		break;
+            	
+            	// sCount or rCount is 1 (single arg)
+            	case 2:
+            		if (thSplit.get(0).equalsIgnoreCase("")) { // start
+            			switch(sCount) {
+            			case 0: // r
+            				msg = ChatColor.translateAlternateColorCodes('&', receiver.getDisplayName() + " " + thSplit.get(1));
+            				break;
+            				
+            			case 1: // s
+            				msg = ChatColor.translateAlternateColorCodes('&', sender.getDisplayName() + " " + thSplit.get(1));
+            				break;
+            			}
+            		}
+            		else if (thSplit.get(1).equalsIgnoreCase("")) { // end
+            			switch(sCount) {
+            			case 0:
+            				msg = ChatColor.translateAlternateColorCodes('&', thSplit.get(0) + "&f" + receiver.getDisplayName());
+            				break;
+            			case 1:
+            				msg = ChatColor.translateAlternateColorCodes('&', thSplit.get(0) + "&f" + sender.getDisplayName());
+            				break;
+            			}
+            		}
+            		else { // middle
+            			switch(sCount) {
+            			case 0:
+            				msg = ChatColor.translateAlternateColorCodes('&', thSplit.get(0) + "&f" + receiver.getDisplayName() + thSplit.get(1));
+            				break;
+            			}
+            		}
+            		break;
+            	
+            	// sCount and rCount is 1 
+            	case 3:
+            		// Check if distance is negative or zero
+            		if (maxDistance <= 0) {
+            			// If so, skip close
+            			if (i >= 5 && i > 8) {
+            				continue;
+            			}
+            		}
+            		if (thSplit.get(0).equalsIgnoreCase("") && thSplit.get(2).equalsIgnoreCase("")) { // start end
+            			switch(first) {
+            			case 1: // s first
+            				msg = ChatColor.translateAlternateColorCodes('&', sender.getDisplayName() + " " + thSplit.get(1) + "&f" + receiver.getDisplayName());
+            				break;
+            			case 2: // r first
+            				msg = ChatColor.translateAlternateColorCodes('&', receiver.getDisplayName() + " " + thSplit.get(1) + "&f" +  sender.getDisplayName());
+            				break;
+            			}
+            		}
+            		else if (thSplit.get(0).equalsIgnoreCase("")) { // start middle
+            			switch(first) {
+        	    		case 1: // s first
+        	    			msg = ChatColor.translateAlternateColorCodes('&', sender.getDisplayName() + " " + thSplit.get(1) + "&f" + receiver.getDisplayName()) + " " + thSplit.get(2);
+        					break;
+        				case 2: // r first
+        					msg = ChatColor.translateAlternateColorCodes('&', receiver.getDisplayName() + " " + thSplit.get(1) + "&f" + sender.getDisplayName()) + " " + thSplit.get(2);
+        					break;
+        				}
+            		}
+            		else if (thSplit.get(2).equalsIgnoreCase("")) { // middle end 
+            			switch(first) {
+        	    		case 1: // s first
+        	    			msg = ChatColor.translateAlternateColorCodes('&', thSplit.get(0) + "&f" +  sender.getDisplayName() + thSplit.get(1) + "&f" +  receiver.getDisplayName());
+        					break;
+        				case 2: // r first
+        					msg = ChatColor.translateAlternateColorCodes('&', thSplit.get(0) + "&f" +  receiver.getDisplayName() + thSplit.get(1) + "&f" +  sender.getDisplayName());
+        					break;
+        				}
+            		}
+            		else { // middle middle
+            			switch(first) {
+        	    		case 1: // s first
+        	    			msg = ChatColor.translateAlternateColorCodes('&', thSplit.get(0) + "&f" + sender.getDisplayName() + " " + thSplit.get(1) + "&f" + receiver.getDisplayName() + " " + thSplit.get(2));
+        					break;
+        				case 2: // r first
+        					msg = ChatColor.translateAlternateColorCodes('&', thSplit.get(0) + "&f" + receiver.getDisplayName() + " " + thSplit.get(1) + "&f" + sender.getDisplayName() + " " + thSplit.get(2));
+        					break;
+        				}
+            		}
+            		
+            		break;
+            		
+            	default:
+            		sender.sendMessage(ChatColor.RED + "Something went wrong! Please report this to the mod author");
+            	}
+            	
+            	// Send message
+            	msgSend(sender, argv, msg, j);
+    		}
     	}
+    	
     return true;
     }
 
@@ -222,11 +261,13 @@ public class Main extends JavaPlugin {
             	// General functions
             	case "help":
             		player.sendMessage(ChatColor.BLUE + "Available commands");
-            		player.sendMessage(ChatColor.AQUA + "/emote help - " + ChatColor.WHITE + "Shows all available commands");
-            		player.sendMessage(ChatColor.AQUA + "/emote list <num> - " + ChatColor.WHITE + "Returns a list of all available emotes");
-            		player.sendMessage(ChatColor.AQUA + "/emote add <name> <usage> <description> - " + ChatColor.WHITE + "Add a new emote");
-            		player.sendMessage(ChatColor.AQUA + "/emote edit <name> <usage/description> <new uusage/description> - " + ChatColor.WHITE + "Edit emote information");
-            		player.sendMessage(ChatColor.AQUA + "/emote remove <name> - " + ChatColor.WHITE + "Remove an emote");
+            		player.sendMessage(ChatColor.AQUA + "/emote help\n" + ChatColor.WHITE + "- Shows all available commands");
+            		player.sendMessage(ChatColor.AQUA + "/emote use <name>\n" + ChatColor.WHITE + "- Use an emote");
+            		player.sendMessage(ChatColor.AQUA + "/emote list <num>\n" + ChatColor.WHITE + "- Returns a list of all available emotes");
+            		player.sendMessage(ChatColor.AQUA + "/emote add <name>\n" + ChatColor.WHITE + "- Add a new emote. Remember to edit its values!");
+            		player.sendMessage(ChatColor.AQUA + "/emote edit <name> <option> <new value>\n" + ChatColor.WHITE + "- Edit emote information. Type /emote edit help for more information");
+            		player.sendMessage(ChatColor.AQUA + "/emote edit help\n" + ChatColor.WHITE + "- See all emote edit options");
+            		player.sendMessage(ChatColor.AQUA + "/emote remove <name>\n" + ChatColor.WHITE + "- Remove an emote");
             		player.sendMessage(ChatColor.GREEN + "NB! /e also works");
             		break;
             	
@@ -237,7 +278,7 @@ public class Main extends JavaPlugin {
         			pageNum = Integer.parseInt(argv[1]);
             		
             		if (argv.length == 2) {
-            			if (pageNum > 0 && pageNum <= numEmotes) {
+            			if (pageNum > 0 && pageNum <= pageLimit) {
             				int count, toSkip;
             				count = 0;
             				toSkip = pageNum * 5 - 5;
@@ -282,35 +323,221 @@ public class Main extends JavaPlugin {
             		break;
 
             	case "add":
-            		if (argv.length == 4) {
-            			String name = argv[1];
-            			//String old = argv[2];
-            			//String replace = argv[3];
-            			
-            			/* Scan for exisitng name */
-            			for (String key1 : emote.getConfig().getConfigurationSection("emotes").getKeys(false)) {
-            				if (key1.equalsIgnoreCase(name)) {
-            					player.sendMessage("Emote already exists");
-            					return true;
-            				}
+            		if (argv.length == 2) {
+            			// /emote add <name>
+            			String emoteName = argv[1];
+
+            			// Scan for exisitng name
+            			if (emote.getConfig().contains("emotes." + emoteName)) {
+            				player.sendMessage("Emote " + emoteName + " already exists");
+        					return true;
             			}
             			
+            			// Update amount count
+            			int amount;
+            			amount = emote.getConfig().getInt("emotes.amount");
+            			emote.getConfig().set("emotes.amount", (amount + 1));
+
+            			// Setup new emote slot
+            			ConfigurationSection newEmote = emote.getConfig().createSection("emotes." + emoteName);
+            			
+            			// General info tab
+            			newEmote.set("description", "<BLANK>");
+            			newEmote.set("usage", "/emote use " + emoteName + " <optional receiver>");
+            			newEmote.set("maxdistance", -1);
+            			
+            			// Single tab
+            			newEmote.set("single.args", -1);
+            			newEmote.set("single.sender", "<BLANK>");
+            			newEmote.set("single.receiver", "<BLANK>");
+            			
+            			// Multiple tab
+            			newEmote.set("multiple.args", -1);
+            			
+            			// Multiple close tab
+            			newEmote.set("multiple.close.sender", "<BLANK>");
+            			newEmote.set("multiple.close.broadcast", "<BLANK>");
+            			newEmote.set("multiple.close.receiver", "<BLANK>");
+            			
+            			// Multiple far tab
+            			newEmote.set("multiple.far.sender", "<BLANK>");
+            			newEmote.set("multiple.far.broadcast", "<BLANK>");
+            			newEmote.set("multiple.far.receiver", "<BLANK>");
+            			
+            			emote.saveConfig();
             		}
             		else {
-            			player.sendMessage(ChatColor.RED + "Invalid use of command!");
+            			player.sendMessage(ChatColor.RED + "Invalid use of command. Type /emote help for more information");
             		}
             		
             		break;
             	
             	case "edit":
+            		if (argv.length == 2) {
+            			switch(argv[1]) {
+            			case "help":
+            				player.sendMessage(ChatColor.DARK_AQUA + "" + ChatColor.BOLD + "Emote edit options");
+            				player.sendMessage(ChatColor.AQUA + "Description\n" + ChatColor.WHITE + "- Edit the description ");
+            				player.sendMessage(ChatColor.AQUA + "Usage\n " + ChatColor.WHITE + "- the user how to use the emote");
+            				player.sendMessage(ChatColor.AQUA + "Distance\n " + ChatColor.WHITE + "- How far users can be apart before it changes between close/far messages");
+            				player.sendMessage(ChatColor.AQUA + "SSender\n " + ChatColor.WHITE + "- No optional reciever, sender return message");
+            				player.sendMessage(ChatColor.AQUA + "SBroadcast\n " + ChatColor.WHITE + "- No optional receiver, broadcast return message");
+            				player.sendMessage(ChatColor.AQUA + "MCSender\n " + ChatColor.WHITE + "- Optional receiver, close distance, sender return message");
+            				player.sendMessage(ChatColor.AQUA + "MCBroadcast\n " + ChatColor.WHITE + "- Optional receiver, close distance, broadcast return message");
+            				player.sendMessage(ChatColor.AQUA + "MCReceiver\n " + ChatColor.WHITE + "- Optional receiver, close distance, receiver return message");
+            				player.sendMessage(ChatColor.AQUA + "MFSender\n " + ChatColor.WHITE + "- Optional receiver, far distance, sender return message");
+            				player.sendMessage(ChatColor.AQUA + "MFBroadcast\n " + ChatColor.WHITE + "- Optional receiver, far distance, broadcast return message");
+            				player.sendMessage(ChatColor.AQUA + "MFReceiver\n " + ChatColor.WHITE + "- Optional receiver, far distance, receiver return message");
+            				player.sendMessage(ChatColor.DARK_AQUA + "\nExtra information");
+            				player.sendMessage(ChatColor.AQUA + "If fields are set to <BLANK> they will not be sent out");
+            				player.sendMessage(ChatColor.AQUA + "If distance is set to -1 close messages will not be sent");
+            				player.sendMessage(ChatColor.AQUA + "If args (single/multiple) are set to -1 it will not send out messages in those categories");
+            				break;
+            			default:
+            				player.sendMessage(ChatColor.RED + "Invalid use of command. Type /emote help for more information");
+            			}
+            			// /emote edit help
+            			
+            		}
+            		else if (argv.length == 4) {
+            			// /emote edit <name> <option> <new value>
+            			String emoteName = argv[1];
+            			String option = argv[2].toLowerCase();
+            			String newdesc = argv[3];
+
+            			// Scan for exisitng name
+            			if (!(emote.getConfig().contains("emotes." + emoteName))) {
+            				player.sendMessage("Emote " + emoteName + " doesn't exists");
+        					return true;
+            			}
+            			
+            			// Setup new emote slot
+            			ConfigurationSection editEmote = emote.getConfig().createSection("emotes." + emoteName);
+            			
+            			switch(option) {
+            			case "description":
+            				if (!(newdesc instanceof String)) {
+            					player.sendMessage(option + " needs to be a string");
+            					break;
+            				}
+            				editEmote.set("description", newdesc);
+            				break;
+            			case "usage":
+            				if (!(newdesc instanceof String)) {
+            					player.sendMessage(option + " needs to be a string");
+            					break;
+            				}
+            				editEmote.set("usage", newdesc);
+            				break;
+            			case "distance":
+            				if (newdesc instanceof String) {
+            					player.sendMessage(option + " needs to be a int");
+            					break;
+            				}
+            				editEmote.set("maxdistance", newdesc);
+            				break;
+            			case "ssender":
+            				if (!(newdesc instanceof String)) {
+            					player.sendMessage(option + " needs to be a string");
+            					break;
+            				}
+            				editEmote.set("single.sender", newdesc);
+            				break;
+            			case "sbroadcast":
+            				if (!(newdesc instanceof String)) {
+            					player.sendMessage(option + " needs to be a string");
+            					break;
+            				}
+            				editEmote.set("single.broadcast", newdesc);
+            				break;
+            			case "mcsender":
+            				if (!(newdesc instanceof String)) {
+            					player.sendMessage(option + " needs to be a string");
+            					break;
+            				}
+            				editEmote.set("multiple.close.sender", newdesc);
+            				break;
+            			case "mcreceiver":
+            				if (!(newdesc instanceof String)) {
+            					player.sendMessage(option + " needs to be a string");
+            					break;
+            				}
+            				editEmote.set("multiple.close.broadcast", newdesc);
+            				break;
+            			case "mcbroadcast":
+            				if (!(newdesc instanceof String)) {
+            					player.sendMessage(option + " needs to be a string");
+            					break;
+            				}
+            				editEmote.set("multiple.close.receiver", newdesc);
+            				break;
+            			case "mfsender":
+            				if (!(newdesc instanceof String)) {
+            					player.sendMessage(option + " needs to be a string");
+            					break;
+            				}
+            				editEmote.set("multiple.far.sender", newdesc);
+            				break;
+            			case "mfbroadcast":
+            				if (!(newdesc instanceof String)) {
+            					player.sendMessage(option + " needs to be a string");
+            					break;
+            				}
+            				editEmote.set("multiple.far.broadcast", newdesc);
+            				break;
+            			case "mfreceiver":
+            				if (!(newdesc instanceof String)) {
+            					player.sendMessage(option + " needs to be a string");
+            					break;
+            				}
+            				editEmote.set("multiple.far.receiver", newdesc);
+            				break;
+            			}
+            			
+            			// Update amount count
+            			int amount;
+            			amount = emote.getConfig().getInt("emotes.amount");
+            			emote.getConfig().set("emotes.amount", (amount - 1));
+            			
+            			emote.saveConfig();
+            		}
+            		else {
+            			player.sendMessage(ChatColor.RED + "Invalid use of command. Type /emote help for more information");
+            		}
             		break;
             	
             	case "remove":
+            		if (argv.length == 2) {
+            			// /emote remove <name>
+            			String emoteName = argv[1];
+
+            			// Scan for exisitng name
+            			if (!emote.getConfig().contains("emotes." + emoteName)) {
+            				player.sendMessage("Emote " + emoteName + " doesn't exists");
+        					return true;
+            			}
+            			
+            			// Update amount count
+            			int amount;
+            			amount = emote.getConfig().getInt("emotes.amount");
+            			emote.getConfig().set("emotes.amount", (amount - 1));
+            			
+            			emote.getConfig().set("emotes." + emoteName, null);
+            			
+            			emote.saveConfig();
+            			
+            		}
+            		else {
+            			player.sendMessage(ChatColor.RED + "Invalid use of command. Type /emote help for more information");
+            		}
             		break;
             		
             	case "use":
             		String emoteName = argv[1].toLowerCase();
-            		ArrayList<String> emoteInfo = new ArrayList<String>();
+            		ArrayList<String> emoteGenInfo = new ArrayList<String>();
+            		ArrayList<String> emoteSingleInfo = new ArrayList<String>();
+            		ArrayList<String> emoteMultipleInfo = new ArrayList<String>();
+            		ArrayList<ArrayList<String>> emoteAllInfo = new ArrayList<ArrayList<String>>();
 
             		for (String key1 : emote.getConfig().getConfigurationSection("emotes").getKeys(false)) {
             			if (!key1.equalsIgnoreCase(emoteName)) {
@@ -318,18 +545,17 @@ public class Main extends JavaPlugin {
     					}
             			
             			for (String key2 : emote.getConfig().getConfigurationSection("emotes." + key1).getKeys(false)) {
-
     						String arg;
     						switch(key2) {
     						case "maxdistance":
     							arg = String.valueOf(emote.getConfig().getInt("emotes." + key1 + "." + key2));
-    							emoteInfo.add(arg);
+    							emoteGenInfo.add(arg);
     							break;
     							
     						case "single":
     							for (String args : emote.getConfig().getConfigurationSection("emotes." + key1 + "." + key2).getKeys(false)) {
     								arg = emote.getConfig().getString("emotes." + key1 + "." + key2 + "." + args);
-    								emoteInfo.add(arg);
+    								emoteSingleInfo.add(arg);
     							}
     							break;
     							
@@ -337,13 +563,13 @@ public class Main extends JavaPlugin {
     							for (String args : emote.getConfig().getConfigurationSection("emotes." + key1 + "." + key2).getKeys(false)) {
     								if (args.equalsIgnoreCase("args")) {
     									arg = emote.getConfig().getString("emotes." + key1 + "." + key2 + "." + args);
-    									emoteInfo.add(arg);
+    									emoteMultipleInfo.add(arg);
     									continue;
     								}
 
     								for (String args2 : emote.getConfig().getConfigurationSection("emotes." + key1 + "." + key2 + "." + args).getKeys(false)) {
     									arg = emote.getConfig().getString("emotes." + key1 + "." + key2 + "." + args + "." + args2);
-    									emoteInfo.add(arg);
+    									emoteMultipleInfo.add(arg);
     									
     								}
     							}
@@ -351,7 +577,11 @@ public class Main extends JavaPlugin {
     						}
     					}
             		}
-            		msgParser(player, argv, emoteInfo);
+            		emoteAllInfo.add(emoteGenInfo);
+            		emoteAllInfo.add(emoteSingleInfo);
+            		emoteAllInfo.add(emoteMultipleInfo);
+            		
+            		msgParser(player, argv, emoteAllInfo);
             		break;
 
             	default:
