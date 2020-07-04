@@ -1,12 +1,13 @@
 # chatCommands
+To be finished
 
-##How to use
+## How to use
 
-##Todo
+## Todo
 
-##Changelog
-###Version 0.3
-###Version 0.2
-###Version 0.1
+## Changelog
+### Version 0.3
+### Version 0.2
+### Version 0.1
 
-##Known issues
+## Known issues
