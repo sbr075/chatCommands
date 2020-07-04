@@ -2,7 +2,7 @@ package me.Skimm.chatCommands;
 
 import java.util.ArrayList;
 
-import org.bukkit.Bukkit;
+//import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -50,98 +50,167 @@ public class Main extends JavaPlugin {
         // Used during shutdown and reloads
     }
     
-    private boolean msgParser(Player sender, String[] argv, String message) {
-    	String[] tokens = message.split(" ");
+    private boolean msgParser(Player sender, String[] argv, ArrayList<String> emoteInfo) {
+    	//int maxDistance;
+    	//maxDistance = Integer.parseInt(emoteInfo.get(0));
 
-    	ArrayList<String> thSplit = new ArrayList<String>();
-
-    	int sCount, rCount;
-    	sCount = rCount = 0;
-    	
-    	String tmp = "";
-    	for (String word : tokens) {
-    		if (sCount > 1 || rCount > 1) {
-    			sender.sendMessage(ChatColor.RED + "Message can't have more than one sender/reciever");
-    			return true;
-    		}
-    		
-    		if (word.length() > 1) {
-    			tmp += word + " ";
+    	for (int i = 2; i < emoteInfo.size(); i++) {
+    		if (emoteInfo.get(i).equalsIgnoreCase("<BLANK>") || i == 4)
     			continue;
-    		}
     		
-    		if (word.equalsIgnoreCase("s")) {
-    			thSplit.add(tmp);
-    			
-    			tmp = "";
-    			sCount++;
-    		}
-    		
-    		else if (word.equalsIgnoreCase("r")) {
-    			thSplit.add(tmp);
-    			
-    			tmp = "";
-    			rCount++;
-    		}
-    	}
-    	
-    	/* Check for all cases */
-    	if (sCount != 0 || rCount != 0)
-    		thSplit.add(tmp);
-    	
-    	/* No sender/reciever present */
-    	if (thSplit.size() == 0) {
-    		sender.sendMessage(message);
-    	}
-    	/* Only one sender/reciever present */
-    	else if (thSplit.size() == 2) {
-    		if (thSplit.get(0).equalsIgnoreCase("")) {
-    			switch(sCount) {
-    			case 0:
-    				Player reciever = sender.getServer().getPlayer(argv[1]);
-    				sender.sendMessage(reciever.getDisplayName() + " " + ChatColor.translateAlternateColorCodes('&', thSplit.get(1)));
-    				break;
-    			case 1:
-    				sender.sendMessage(sender.getDisplayName() + " " + ChatColor.translateAlternateColorCodes('&', thSplit.get(1)));
-    				break;
-    			}
-    		}
-    		else if (thSplit.get(1).equalsIgnoreCase("")) {
-    			switch(sCount) {
-    			case 0:
-    				Player reciever = sender.getServer().getPlayer(argv[1]);
-    				sender.sendMessage(ChatColor.translateAlternateColorCodes('&', ChatColor.translateAlternateColorCodes('&', thSplit.get(0)) + "&f" + reciever.getDisplayName()));
-    				break;
-    			case 1:
-    				sender.sendMessage(ChatColor.translateAlternateColorCodes('&', ChatColor.translateAlternateColorCodes('&', thSplit.get(0)) + "&f" + sender.getDisplayName()));
-    				break;
-    			}
+    		if (i < 4) {
+    			if ((argv.length - 1) > Integer.parseInt(emoteInfo.get(1)) || emoteInfo.get(1).equalsIgnoreCase("<BLANK>"))
+    				continue;
     		}
     		else {
-    			switch(sCount) {
-    			case 0:
-    				Player reciever = sender.getServer().getPlayer(argv[1]);
-    				sender.sendMessage(ChatColor.translateAlternateColorCodes('&',  ChatColor.translateAlternateColorCodes('&', thSplit.get(0)) + " &f" + reciever.getDisplayName() + ChatColor.translateAlternateColorCodes('&', thSplit.get(1))));
+    			if ((argv.length - 1) < Integer.parseInt(emoteInfo.get(4)) || emoteInfo.get(4).equalsIgnoreCase("<BLANKS>"))
     				break;
-    			case 1:
-    				sender.sendMessage(ChatColor.translateAlternateColorCodes('&',  ChatColor.translateAlternateColorCodes('&', thSplit.get(0)) + " &f" + sender.getDisplayName() + ChatColor.translateAlternateColorCodes('&', thSplit.get(1))));
-    			}
     		}
-    	}
-    	else if (thSplit.size() == 2) {
     		
+    		String[] tokens = emoteInfo.get(i).split(" ");
+
+        	ArrayList<String> thSplit = new ArrayList<String>();
+
+        	int sCount, rCount, first;
+        	sCount = rCount = first = 0;
+        	
+        	String tmp = "";
+        	for (String word : tokens) {
+        		if (sCount > 1 || rCount > 1) {
+        			sender.sendMessage(ChatColor.RED + "Message can't have more than one sender/receiver");
+        			return true;
+        		}
+        		
+        		if (word.length() > 1) {
+        			tmp += word + " ";
+        			continue;
+        		}
+        		
+        		if (word.equalsIgnoreCase("s")) {
+        			thSplit.add(tmp);
+        			
+        			tmp = "";
+        			sCount++;
+        			
+        			if (rCount == 0) {
+        				first = 1;
+        			}
+        		}
+        		
+        		else if (word.equalsIgnoreCase("r")) {
+        			thSplit.add(tmp);
+        			
+        			tmp = "";
+        			rCount++;
+        			
+        			if (sCount == 0) {
+        				first = 2;
+        			}
+        		}
+        	}
+        	
+        	if (sCount != 0 || rCount != 0)
+        		thSplit.add(tmp);
+        	
+        	// sCount and rCount is 0 
+        	switch(thSplit.size()) {
+        	case 0:
+        		sender.sendMessage(emoteInfo.get(i));
+        		break;
+        	
+        	// sCount or rCount is 1 
+        	case 2:
+        		if (thSplit.get(0).equalsIgnoreCase("")) { 
+        			switch(sCount) {
+        			case 0:
+        				Player receiver = sender.getServer().getPlayer(argv[1]);
+        				sender.sendMessage(ChatColor.translateAlternateColorCodes('&', receiver.getDisplayName() + " " + thSplit.get(1)));
+        				break;
+        			case 1:
+        				sender.sendMessage(ChatColor.translateAlternateColorCodes('&', sender.getDisplayName() + " " + thSplit.get(1)));
+        				break;
+        			}
+        		}
+        		else if (thSplit.get(1).equalsIgnoreCase("")) { 
+        			switch(sCount) {
+        			case 0:
+        				Player receiver = sender.getServer().getPlayer(argv[1]);
+        				sender.sendMessage(ChatColor.translateAlternateColorCodes('&', thSplit.get(0) + "&f" + receiver.getDisplayName()));
+        				break;
+        			case 1:
+        				sender.sendMessage(ChatColor.translateAlternateColorCodes('&', thSplit.get(0) + "&f" + sender.getDisplayName()));
+        				break;
+        			}
+        		}
+        		else {
+        			switch(sCount) {
+        			case 0:
+        				Player receiver = sender.getServer().getPlayer(argv[1]);
+        				sender.sendMessage(ChatColor.translateAlternateColorCodes('&', thSplit.get(0) + "&f" + receiver.getDisplayName() + thSplit.get(1)));
+        				break;
+        			case 1:
+        				sender.sendMessage(ChatColor.translateAlternateColorCodes('&', thSplit.get(0) + "&f" + sender.getDisplayName() + thSplit.get(1)));
+        				break;
+        			}
+        		}
+        		break;
+        	
+        	// sCount and rCount is 1 
+        	case 3:
+        		Player receiver = sender.getServer().getPlayer(argv[2]);
+        		
+        		if (thSplit.get(0).equalsIgnoreCase("") && thSplit.get(2).equalsIgnoreCase("")) { // start end
+        			switch(first) {
+        			case 1: // s first
+        				sender.sendMessage(ChatColor.translateAlternateColorCodes('&', sender.getDisplayName() + " " + thSplit.get(1) + "&f" + receiver.getDisplayName()));
+        				break;
+        			case 2: // r first
+        				sender.sendMessage(ChatColor.translateAlternateColorCodes('&', receiver.getDisplayName() + " " + thSplit.get(1) + "&f" +  sender.getDisplayName()));
+        				break;
+        			}
+        		}
+        		else if (thSplit.get(0).equalsIgnoreCase("")) { // start middle
+        			switch(first) {
+    	    		case 1: // s first
+    	    			sender.sendMessage(ChatColor.translateAlternateColorCodes('&', sender.getDisplayName() + " " + thSplit.get(1) + "&f" + receiver.getDisplayName()) + " " + thSplit.get(2));
+    					break;
+    				case 2: // r first
+    					sender.sendMessage(ChatColor.translateAlternateColorCodes('&', receiver.getDisplayName() + " " + thSplit.get(1) + "&f" + sender.getDisplayName()) + " " + thSplit.get(2));
+    					break;
+    				}
+        		}
+        		else if (thSplit.get(2).equalsIgnoreCase("")) { // middle end 
+        			switch(first) {
+    	    		case 1: // s first
+    	    			sender.sendMessage(ChatColor.translateAlternateColorCodes('&', thSplit.get(0) + "&f" +  sender.getDisplayName() + thSplit.get(1) + "&f" +  receiver.getDisplayName()));
+    					break;
+    				case 2: // r first
+    					sender.sendMessage(ChatColor.translateAlternateColorCodes('&', thSplit.get(0) + "&f" +  receiver.getDisplayName() + thSplit.get(1) + "&f" +  sender.getDisplayName()));
+    					break;
+    				}
+        		}
+        		else { // middle middle
+        			switch(first) {
+    	    		case 1: // s first
+    	    			sender.sendMessage(ChatColor.translateAlternateColorCodes('&', thSplit.get(0) + "&f" + sender.getDisplayName() + " " + thSplit.get(1) + "&f" + receiver.getDisplayName() + " " + thSplit.get(2)));
+    					break;
+    				case 2: // r first
+    					sender.sendMessage(ChatColor.translateAlternateColorCodes('&', thSplit.get(0) + "&f" + receiver.getDisplayName() + " " + thSplit.get(1) + "&f" + sender.getDisplayName() + " " + thSplit.get(2)));
+    					break;
+    				}
+        		}
+        		
+        		break;
+        		
+        	default:
+        		sender.sendMessage(ChatColor.RED + "Something went wrong! Please report this to the mod author");
+        	}
     	}
-    	else {
-    		
-    	}
-    	
-    	return true;
+    return true;
     }
 
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] argv) {
         if (label.equalsIgnoreCase("emote") || label.equalsIgnoreCase("e")) {
-        	
-        	/*/emote use kiss <reciever> */
         	
             // Player
             if (sender instanceof Player) {
@@ -150,7 +219,6 @@ public class Main extends JavaPlugin {
             	String command = argv[0].toLowerCase();
 
             	switch (command) {
-            	
             	// General functions
             	case "help":
             		player.sendMessage(ChatColor.BLUE + "Available commands");
@@ -192,7 +260,7 @@ public class Main extends JavaPlugin {
             						if (key2.equalsIgnoreCase("usage")) {
             							player.sendMessage(ChatColor.DARK_AQUA + info);
             						}
-            						else {
+            						else if (key2.equalsIgnoreCase("description")) {
             							player.sendMessage(ChatColor.DARK_AQUA + "" + ChatColor.ITALIC + "- " +  info);
             						}
             					}
@@ -212,7 +280,7 @@ public class Main extends JavaPlugin {
             		}
             		
             		break;
-            	
+
             	case "add":
             		if (argv.length == 4) {
             			String name = argv[1];
@@ -239,342 +307,57 @@ public class Main extends JavaPlugin {
             	
             	case "remove":
             		break;
-            	
-            	// Emotes
-            	case "hug":
-        			if (argv.length == 1) {
-        				msgParser(player, argv, "s &4hugs &fthe thin air");
-        				msgParser(player, argv, "&4hugs s &fthe thin air");
-        				msgParser(player, argv, "&4hugs &fthe thin air s");
-        				
-        				//msgParser(player, argv, "r &4hugs &fthe thin air");
-        				//msgParser(player, argv, "&4hugs r &fthe thin air");
-        				//msgParser(player, argv, "&4hugs &fthe thin air r");
-        				
-        				//msgParser(player, argv, "s &4 hugs r");
-        				//msgParser(player, argv, "s &4 hugs r hello");
-        				//msgParser(player, argv, "hello s &4 hugs r");
-        				//msgParser(player, argv, "hello s &4 hugs r hello");
-        				
-        				//msgParser(player, argv, "r &4 hugs s");
-        				//msgParser(player, argv, "r &4 hugs s hello");
-        				//msgParser(player, argv, "hello s &4 hugs s");
-        				//msgParser(player, argv, "hello s &4 hugs s hello");
-        				
-        				Bukkit.broadcastMessage(player.getDisplayName() + (ChatColor.RED + "" + ChatColor.BOLD + " hugs ") + (ChatColor.WHITE + "the thin air."));
-        			}
-        			
-        			else if (argv.length == 2) {
-        				Player reciever = player.getServer().getPlayer(argv[1]);
-        				double distance = player.getLocation().distance(reciever.getLocation());
-        				
-        				Bukkit.broadcastMessage(player.getDisplayName() + (ChatColor.RED + "" + ChatColor.BOLD + " hugs ") + (ChatColor.WHITE + reciever.getDisplayName()));
-        			
-        				if (distance < 10) {
-        					player.sendMessage(player.getDisplayName() + (ChatColor.RED + "" + ChatColor.BOLD + " hugs ") + (ChatColor.WHITE + reciever.getDisplayName()));
-            				reciever.sendMessage(player.getDisplayName() + (ChatColor.RED + "" + ChatColor.BOLD + " hugs ") + (ChatColor.WHITE + "you tightly!"));
-        				}
-        				else {
-        					player.sendMessage(player.getDisplayName() + (ChatColor.RED + "" + ChatColor.BOLD + " hugs ") + (ChatColor.WHITE + reciever.getDisplayName()) + " from far away!");
-            				reciever.sendMessage(player.getDisplayName() + " sends you a virtual " + ChatColor.RED + "" + ChatColor.BOLD + "hug");
-        				}
-        			}
-        			
-        			else {
-        				player.sendMessage(ChatColor.RED + "Invalid use of command!");
-        			}
-        				
-        			break;
-        			
-        		case "kiss":
-					if (argv.length == 1) {
-						Bukkit.broadcastMessage(player.getDisplayName() + " sent a " + (ChatColor.LIGHT_PURPLE + "" + ChatColor.BOLD + "kiss") + (ChatColor.WHITE + " to no one."));
-        			}
-					
-        			else if (argv.length == 2) {
-        				Player reciever = player.getServer().getPlayer(argv[1]);
-        				double distance = player.getLocation().distance(reciever.getLocation());
-        				
-        				Bukkit.broadcastMessage(player.getDisplayName() + (ChatColor.LIGHT_PURPLE + "" + ChatColor.BOLD + " kisses ") + reciever.getDisplayName());
-        				
-        				if (distance < 10) {
-        					player.sendMessage(player.getDisplayName() + (ChatColor.LIGHT_PURPLE + "" + ChatColor.BOLD + " kisses ") + reciever.getDisplayName());
-        					reciever.sendMessage("Surprise!, " + player.getDisplayName() + (ChatColor.LIGHT_PURPLE + "" + ChatColor.BOLD + " kisses you!"));
-        				}
-        				else {
-        					player.sendMessage(player.getDisplayName() + (ChatColor.LIGHT_PURPLE + "" + ChatColor.BOLD + " kisses ") + reciever.getDisplayName());
-        					reciever.sendMessage(player.getDisplayName() + " throws you a " + (ChatColor.LIGHT_PURPLE + "kiss") + (ChatColor.WHITE + " from " + distance + " blocks away!"));
-        				}
-        			}
-					
-        			else {
-        				player.sendMessage(ChatColor.RED + "Invalid use of command!");
-        			}
-        			
-        			break;
-        			
-        		case "cut":
-        			if (argv.length == 1) {
-        				Bukkit.broadcastMessage(player.getDisplayName() + ChatColor.RED + "cut" + ChatColor.WHITE + " themselves, ouch!");
-        				player.damage(1);
-        			}
-        			
-        			else {
-        				player.sendMessage(ChatColor.RED + "Invalid use of command!");
-        			}
-        			break;
-        		
-        		case "goodbye":
-        			if (argv.length == 1) {
-        				Bukkit.broadcastMessage(player.getDisplayName() + " takes their final breath");
-        				player.damage(20);
-        			}
-        			
-        			else {
-        				player.sendMessage(ChatColor.RED + "Invalid use of command!");
-        			}
-        			break;
-        			
-        		case "wave":
-        			if (argv.length == 1) {
-        				Bukkit.broadcastMessage(player.getDisplayName() + ChatColor.YELLOW + " waves " + ChatColor.WHITE + "to, uh, no one?");
-        			}
-					
-        			else if (argv.length == 2) {
-        				Player reciever = player.getServer().getPlayer(argv[1]);
-        				double distance = player.getLocation().distance(reciever.getLocation());
-        				
-        				if (distance < 100) {
-        					Bukkit.broadcastMessage(player.getDisplayName() + ChatColor.YELLOW + " waves " + ChatColor.WHITE + "at " + reciever.getDisplayName());
-        					
-        					player.sendMessage("You " + ChatColor.GREEN + "wave" + ChatColor.WHITE + " at " + reciever.getDisplayName());
-        					reciever.sendMessage(player.getDisplayName() + ChatColor.GREEN + "waves" + ChatColor.WHITE + " at you!");
-        				}
-        				else {
-        					player.sendMessage("Who are you waving at? Try to find someone first.");
-        				}
-        			}
-					
-        			else {
-        				player.sendMessage(ChatColor.RED + "Invalid use of command!");
-        			}
-        			
-        			break;
-        			
-        		case "smile":
-        			if (argv.length == 1) {
-        				Bukkit.broadcastMessage(player.getDisplayName() + ChatColor.YELLOW + " smiles " + ChatColor.WHITE + "randomly");
-        			}
-					
-        			else if (argv.length == 2) {
-        				Player reciever = player.getServer().getPlayer(argv[1]);
-        				double distance = player.getLocation().distance(reciever.getLocation());
-        				
-        				Bukkit.broadcastMessage(player.getDisplayName() + ChatColor.YELLOW + " smiles" + ChatColor.WHITE + " at " + reciever.getDisplayName());
-        				
-        				if (distance < 100) {
-        					player.sendMessage(player.getDisplayName() + ChatColor.YELLOW + " smiles" + ChatColor.WHITE + " towards " + reciever.getDisplayName());
-        					reciever.sendMessage(player.getDisplayName() + ChatColor.YELLOW + " smiles " + ChatColor.WHITE + "at you");
-        				}
-        				else {
-        					player.sendMessage(player.getDisplayName() + " thinks of " + reciever.getDisplayName() + "and " + ChatColor.YELLOW + "smile");
-        					reciever.sendMessage("You get the feeling someone is " + ChatColor.YELLOW + "smiling" + ChatColor.WHITE + " at you. Might be a good time to run");
-        				}
-        			}
-					
-        			else {
-        				player.sendMessage(ChatColor.RED + "Invalid use of command!");
-        			}
-        			
-        			break;
-        			
-        		case "flush":
-        			if (argv.length == 1) {
-        				Bukkit.broadcastMessage(player.getDisplayName() + ChatColor.RED + "flushes");
-        				player.sendMessage("Your cheeks heath up. Oh no, you're " + ChatColor.RED + "flushing!");
-        			}
-					
-        			else if (argv.length == 2) {
-        				Player reciever = player.getServer().getPlayer(argv[1]);
-        				double distance = player.getLocation().distance(reciever.getLocation());
-        				
-        				Bukkit.broadcastMessage(player.getDisplayName() + ChatColor.RED + " flushes " + ChatColor.WHITE + "at the thought of " + reciever.getDisplayName());
-        				
-        				if (distance < 100) {
-        					player.sendMessage(player.getDisplayName() + ChatColor.DARK_PURPLE + " flushes " + ChatColor.WHITE + "while looking at " + reciever.getDisplayName());
-        					reciever.sendMessage(player.getDisplayName() + ChatColor.DARK_PURPLE + " flushes " + ChatColor.WHITE + "looking at you");
-        				}
-        				else {
-        					player.sendMessage(player.getDisplayName() + ChatColor.DARK_PURPLE + " flushes " + ChatColor.WHITE + "at " + reciever.getDisplayName() + " from far away!");
-        					reciever.sendMessage("Someone, somewhere, flushes at you");
-        				}
-        			}
-					
-        			else {
-        				player.sendMessage(ChatColor.RED + "Invalid use of command!");
-        			}
-        			
-        			break;
-        		
-        		case "laugh":
-        			if (argv.length == 1) {
-        				Bukkit.broadcastMessage(player.getDisplayName() + ChatColor.YELLOW + " laughs " + ChatColor.WHITE + "by themselves");
-        			}
-					
-        			else if (argv.length == 2) {
-        				Player reciever = player.getServer().getPlayer(argv[1]);
-        				double distance = player.getLocation().distance(reciever.getLocation());
-        				
-        				Bukkit.broadcastMessage(player.getDisplayName() + ChatColor.YELLOW + " laughs " + ChatColor.WHITE + "at " + reciever.getDisplayName());
-        				
-        				if (distance < 50) {
-        					player.sendMessage(player.getDisplayName() + ChatColor.YELLOW + " laughs " + ChatColor.WHITE + "at " + reciever.getDisplayName());
-        					reciever.sendMessage(player.getDisplayName() + ChatColor.YELLOW + " laughs " + ChatColor.WHITE + "at you!");
-        				}
-        				else {
-        					player.sendMessage(player.getDisplayName() + ChatColor.YELLOW + " laughs " + ChatColor.WHITE + "while thinking about " + reciever.getDisplayName());
-        					reciever.sendMessage("You get the feeling someone is " + ChatColor.YELLOW + "laughing " + ChatColor.WHITE + "at you!");
-        				}
-        			}
-					
-        			else {
-        				player.sendMessage(ChatColor.RED + "Invalid use of command!");
-        			}
-        			
-        			break;
-        			
-        		case "angry":
-        			if (argv.length == 1) {
-        				Bukkit.broadcastMessage(player.getDisplayName() + " is really " + ChatColor.RED + "angry" + ChatColor.WHITE + ". Might want to stay away for a while");
-        			}
-					
-        			else if (argv.length == 2) {
-        				Player reciever = player.getServer().getPlayer(argv[1]);
-        				
-        				Bukkit.broadcastMessage(player.getDisplayName() + " is " + ChatColor.RED + "angry" + ChatColor.WHITE + " at " + reciever.getDisplayName());
+            		
+            	case "use":
+            		String emoteName = argv[1].toLowerCase();
+            		ArrayList<String> emoteInfo = new ArrayList<String>();
 
-        				player.sendMessage(player.getDisplayName() + " is " + ChatColor.RED + "angry" + ChatColor.WHITE + " at " + reciever.getDisplayName());
-        				reciever.sendMessage(player.getDisplayName() + " is " + ChatColor.RED + "angry" + ChatColor.WHITE + " at you");
-        			}
-					
-        			else {
-        				player.sendMessage(ChatColor.RED + "Invalid use of command!");
-        			}
-        			
-        			break;
-        			
-        		case "cry":
-        			if (argv.length == 1) {
-        				Bukkit.broadcastMessage(player.getDisplayName() + ChatColor.BLUE + "cries" + ChatColor.WHITE + " :'(");
-        			}
-					
-        			else {
-        				player.sendMessage(ChatColor.RED + "Invalid use of command!");
-        			}
-        			
-        			break;
-        			
-        		case "rate":
-        			if (argv.length == 3) {
-        				Player reciever = player.getServer().getPlayer(argv[1]);
-        				
-        				Bukkit.broadcastMessage(player.getDisplayName() + ChatColor.GOLD + " rates " + ChatColor.WHITE + reciever.getDisplayName() + " " + Integer.parseInt(argv[2]) + " out of 10");
-        				
-        				player.sendMessage(player.getDisplayName() + ChatColor.GOLD + " rates " + ChatColor.WHITE + reciever.getDisplayName() + " " + Integer.parseInt(argv[2]) + " out of 10");
-        				reciever.sendMessage(player.getDisplayName() + ChatColor.GOLD + " rates " + ChatColor.WHITE + "you " + Integer.parseInt(argv[2]) + " out of 10");
-        			}
-	
-        			else {
-        				player.sendMessage(ChatColor.RED + "Invalid use of command!");
-        			}
-        			
-        			break;
-        		
-        		case "dance":
-        			if (argv.length == 1) {
-        				Bukkit.broadcastMessage(player.getDisplayName() + " is dancing in front of the mirror");
-        			}
-        			else if (argv.length == 2) {
-        				Player reciever = player.getServer().getPlayer(argv[1]);
-        				double distance = player.getLocation().distance(reciever.getLocation());
-        				
-        				if (distance < 50) {
-        					Bukkit.broadcastMessage(player.getDisplayName() + " shows their moves to " + reciever.getDisplayName());
-        					
-        					player.sendMessage(player.getDisplayName() + " tries to impress " + reciever.getDisplayName() + " with their moves");
-        					reciever.sendMessage(player.getDisplayName() + " tries to impress you with their dance");
-        				}
-        				else {
-        					player.sendMessage(reciever.getDisplayName() + " isn't looking at you");
-        				}
-        			}
-        			else {
-        				player.sendMessage(ChatColor.RED + "Invalid use of command!");
-        			}
-        			break;
-        		
-        		case "flirt":
-        			if (argv.length == 1) {
-        				player.sendMessage("I hope you're practising");
-        			}
-        			else if (argv.length == 2) {
-        				Player reciever = player.getServer().getPlayer(argv[1]);
-        				double distance = player.getLocation().distance(reciever.getLocation());
-        				
-        				if (distance < 50) {
-        					Bukkit.broadcastMessage(player.getDisplayName() + ChatColor.LIGHT_PURPLE + " flirts " + ChatColor.WHITE + "with " + reciever.getDisplayName());
-        					
-        					player.sendMessage("You" + ChatColor.LIGHT_PURPLE + " flirt " + ChatColor.WHITE + "with " + reciever.getDisplayName());
-        					reciever.sendMessage(player.getDisplayName() +  ChatColor.LIGHT_PURPLE + " flirt " + ChatColor.WHITE + "with you");
-        				}
-        				else {
-        					Bukkit.broadcastMessage(player.getDisplayName() + " sends a " + ChatColor.LIGHT_PURPLE + "love letter " + ChatColor.WHITE + "to " + reciever.getDisplayName());
-        				}
-        			}
-        			else {
-        				player.sendMessage(ChatColor.RED + "Invalid use of command!");
-        			}
-        			break;
-        			
-        		case "pinch":
-        			if (argv.length == 1) {
-        				player.sendMessage("You pinch yourself!");
-        				player.damage(1);
-        			}
-        			else if (argv.length == 2) {
-        				Player reciever = player.getServer().getPlayer(argv[1]);
-        				double distance = player.getLocation().distance(reciever.getLocation());
-        				
-        				if (distance < 5) {
-        					Bukkit.broadcastMessage(player.getDisplayName() + ChatColor.BLACK + " pinches " + reciever.getDisplayName());
-        					
-        					player.sendMessage("You" + ChatColor.BLACK + " pinch " + reciever.getDisplayName());
-        					reciever.sendMessage(player.getDisplayName() +  ChatColor.BLACK + " pinches " + ChatColor.WHITE + "you");
-        				}
-        				else {
-        					player.sendMessage(reciever.getDisplayName() + "is too far away!");
-        				}
-        			}
-        			else {
-        				player.sendMessage(ChatColor.RED + "Invalid use of command!");
-        			}
-        			break;
-        		
-        		case "facepalm":
-        			if (argv.length == 1) {
-        				Bukkit.broadcastMessage(player.getDisplayName() + ChatColor.BLUE + " facepalms");
-        			}
-        			else {
-        				player.sendMessage(ChatColor.RED + "Invalid use of command!");
-        			}
-        			break;
-        			
-        		default:
-        			player.sendMessage("No such emote!");
-        			break;
-        		}
-            	
-                return true;
+            		for (String key1 : emote.getConfig().getConfigurationSection("emotes").getKeys(false)) {
+            			if (!key1.equalsIgnoreCase(emoteName)) {
+    						continue;
+    					}
+            			
+            			for (String key2 : emote.getConfig().getConfigurationSection("emotes." + key1).getKeys(false)) {
+
+    						String arg;
+    						switch(key2) {
+    						case "maxdistance":
+    							arg = String.valueOf(emote.getConfig().getInt("emotes." + key1 + "." + key2));
+    							emoteInfo.add(arg);
+    							break;
+    							
+    						case "single":
+    							for (String args : emote.getConfig().getConfigurationSection("emotes." + key1 + "." + key2).getKeys(false)) {
+    								arg = emote.getConfig().getString("emotes." + key1 + "." + key2 + "." + args);
+    								emoteInfo.add(arg);
+    							}
+    							break;
+    							
+    						case "multiple":
+    							for (String args : emote.getConfig().getConfigurationSection("emotes." + key1 + "." + key2).getKeys(false)) {
+    								if (args.equalsIgnoreCase("args")) {
+    									arg = emote.getConfig().getString("emotes." + key1 + "." + key2 + "." + args);
+    									emoteInfo.add(arg);
+    									continue;
+    								}
+
+    								for (String args2 : emote.getConfig().getConfigurationSection("emotes." + key1 + "." + key2 + "." + args).getKeys(false)) {
+    									arg = emote.getConfig().getString("emotes." + key1 + "." + key2 + "." + args + "." + args2);
+    									emoteInfo.add(arg);
+    									
+    								}
+    							}
+    							break;
+    						}
+    					}
+            		}
+            		msgParser(player, argv, emoteInfo);
+            		break;
+
+            	default:
+            		player.sendMessage(ChatColor.RED + "Invalid use of command. Type /emote help for more information");
+            		break;
+            	}
             }
         }
         else {

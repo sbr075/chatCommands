@@ -1,100 +1,241 @@
-commands:
-  help
-  list
-  add
-  edit
-  remove
-  send
-
 emotes:
   amount: 15
   hug:
     description: We all just want to cuddle
-    usage: /emote hug <optional reciever>
-    sender:
-    reciever:
-    broadcast: "s &dhugs &fthe thin air"
+    usage: /emote use hug <optional receiver>
+    maxdistance: 10
+    single:
+      args: 1
+      sender: <BLANK>
+      broadcast: s &chugs the thin air
+    multiple:
+      args: 2
+      close:
+        sender: s &chugs r
+        receiver: s &chugs you tightly!
+        broadcast: s &chugs r
+      far:
+        sender: s &chugs from far away!
+        receiver: s sends you a virtual &chug
+        broadcast: s wants to &chug r
   kiss:
     description: Show your love for someone
-    usage: /emote kiss <optional reciever>
-    sender:
-    reciever:
-    broadcast: 
+    usage: /emote use kiss <optional receiver>
+    maxdistance: 10
+    maxargs: 2
+    single:
+      sender: <BLANK>
+      broadcast: s sent a &d kiss to r
+    multiple:
+      close:
+        sender: s &dkisses r
+        receiver: Surprise!, s &dkisses you!
+        broadcast: s &dkisses r
+      far:
+        sender: You send a &dkiss to r
+        receiver: s throws you a &d from afar
+        broadcast: s sent a &dkiss to r
   cut:
     description: Cut yourself. Don't do this too often
-    usage: /emote cut
-    sender:
-    reciever:
-    broadcast: 
-  wave:
-    description: Greet someone
-    usage: /emote wave <optional reciever>
-    sender:
-    reciever:
-    broadcast: 
-  smile:
-    description: Show off that beautiful face
-    usage: /emote smile <optional reciever>
-    sender:
-    reciever:
-    broadcast: 
-  flush:
-    description: Warm up those cheeks
-    usage: /emote flush <optional reciever>
-    sender:
-    reciever:
-    broadcast: 
+    usage: /emote use cut
+    maxdistance: -1
+    maxargs: 1
+    single:
+      sender: <BLANK>
+      broadcast: s &4cuts themselves, ouch!
+    multiple:
+      close:
+        sender: <BLANK>
+        receiver: <BLANK>
+        broadcast: <BLANK>
+      far:
+        sender: <BLANK>
+        receiver: <BLANK>
+        broadcast: <BLANK>
   goodbye:
     description: An easy end to a hard life
-    usage: /emote goodbye
-    sender:
-    reciever:
-    broadcast: 
+    usage: /emote use goodbye
+    maxdistance: -1
+    maxargs: 1
+    single: 
+      sender: <BLANK>
+      broadcast: s takes their final breath
+    multiple:
+      close:
+        sender: <BLANK>
+        receiver: <BLANK>
+        broadcast: <BLANK>
+      far:
+        sender: <BLANK>
+        receiver: <BLANK>
+        broadcast: <BLANK>
+  wave:
+    description: Greet someone
+    usage: /emote use wave <optional receiver>
+    maxdistance: 100
+    maxargs: 2
+    single:
+      sender: <BLANK>
+      broadcast: s &ewaves to, uh, no one?
+    multiple:
+      close:
+        sender: You &ewave to r
+        receiver: s &ewaves to you!
+        broadcast: s &ewaves at r
+      far:
+        sender: Who are you waving at? Try to find someone first
+        receiver: <BLANK>
+        broadcast: <BLANK>
+  smile:
+    description: Show off that beautiful face
+    usage: /emote use smile <optional receiver>
+    maxdistance: 100
+    maxargs: 2
+    single:
+      sender: <BLANK>
+      broadcast: s &esmiles randomly
+    multiple:
+      close:
+        sender: You &esmiles towards r
+        receiver: s &esmiles at you
+        broadcast: s &esmiles at r
+      far:
+        sender: You &esmiles at r
+        receiver: s &esmiles at you
+        broadcast: s &esmiles at r
+  flush:
+    description: Warm up those cheeks
+    usage: /emote use flush <optional receiver>
+    maxdistance: 100
+    maxargs: 2
+    single:
+      sender: Your cheeks heath up. Oh no, you're &cflushing
+      broadcast: s &cflushes
+    multiple:
+      close:
+        sender: You &cflush while looking at r
+        receiver: You notice s &cflushes while looking at you
+        broadcast: s &cflushes at the thought of r
+      far:
+        sender: You &cflush at the thought of r
+        receiver: Someone, somewhere, flushes at the thought of you
+        broadcast: s &cflushes at the thought of r
   laugh:
     description: Laugh at someone
-    usage: /emote laugh <optional reciever>
-    sender:
-    reciever:
-    broadcast: 
+    usage: /emote use laugh <optional receiver>
+    maxdistance: 50
+    maxargs: 2
+    single:
+      sender: You suddenly remembered a funny joke you heard once
+      broadcast: s &elaughs quietly to themselves
+    multiple:
+      close:
+        sender: You &elaugh at r
+        receiver: s &elaughs at you
+        broadcast: s &elaughs at r
+      far:
+        sender: You &elaugh at the thought of r
+        receiver: You get the feeling someone is &elaughing at you
+        broadcast: s &elaughs at r
   angry:
     description: Let your rage out
-    usage: /emote angry <optional reciever>
-    sender:
-    reciever:
-    broadcast: 
+    usage: /emote use angry <optional receiver>
+    maxdistance: -1
+    maxargs: 2
+    single:
+      sender: You become &cangry
+      broadcast: s is really &cangry right now. Might want to stay away for a while
+    multiple:
+      close:
+        sender: <BLANK>
+        receiver: <BLANK>
+        broadcast: <BLANK>
+      far:
+        sender: You're &cangry at r
+        receiver: s is &cangry at you
+        broadcast: s is &cangry at r
   rate:
     description: Rate someone
-    usage: /emote rate <reciever> <number>
-    sender:
-    reciever:
-    broadcast: 
+    usage: /emote use rate <receiver> <number>
+    maxdistance: -1
+    maxargs: 3
+    single:
+      sender: <BLANK>
+      broadcast: <BLANK>
+    multiple:
+      close:
+        sender: <BLANK>
+        receiver: <BLANK>
+        broadcast: <BLANK>
+      far:
+        sender: You &erate r %d out of 10
+        receiver: s &erates you a %d out of 10
+        broadcast: s &e rates r &d out of 10
   cry:
     description: Let those emotions out
-    usage: /emote cry
-    sender:
-    reciever:
-    broadcast: 
+    usage: /emote use cry
+    maxdistance: -1
+    maxargs: 1
+    single:
+      sender:
+      broadcast: s &1 cries :'(
+    multiple:
+      close:
+        sender: <BLANK>
+        receiver: <BLANK>
+        broadcast: <BLANK>
+      far:
+        sender: <BLANK>
+        receiver: <BLANK>
+        broadcast: <BLANK>
   dance:
     description: Show off your moves!
-    usage: /emote dance <optional reciever>
-    sender:
-    reciever:
-    broadcast: 
+    usage: /emote use dance <optional receiver>
+    maxdistance: 50
+    maxargs: 2
+    single:
+      sender: You're feeling on point today
+      broadcast: s is &3dancing in front of the mirror
+    multiple:
+      close:
+        sender: You try to impress r with your &3dance
+        receiver: s tries to impress you with their &3dance
+        broadcast: s is showing their moves to r
+      far:
+        sender: r isn't looking at you
+        receiver: <BLANK>
+        broadcast: <BLANK>
   flirt:
     description: Sweet talk your way in
-    usage: /emote flirt <optional reciever>
-    sender:
-    reciever:
-    broadcast: 
+    usage: /emote use flirt <optional receiver>
+    maxdistance: 50
+    maxargs: 2
+    single:
+      sender: I hope you're just practicing
+      broadcast: <BLANK>
+    multiple:
+      close:
+        sender: You &dflirt with r
+        receiver: s &dflirts with you
+        broadcast: s &dflirts with r
+      far:
+        sender: <BLANK>
+        receiver: <BLANK>
+        broadcast: s sends a &dlove letter to r
   pinch:
     description: Pinch someone or yourself
-    usage: /emote pinch <optional reciever>
-    sender:
-    reciever:
-    broadcast: 
-  facepalm:
-    description: Slap your face
-    usage: /emote facepalm
-    sender:
-    reciever:
-    broadcast: 
+    usage: /emote use pinch <optional receiver>
+    maxdistance: 5
+    maxargs: 2
+    single:
+      sender: You pinch yourself
+      broadcast: <BLANK>
+    multiple:
+      close:
+        sender: You &8pinch r
+        receiver: s &8pinches you
+        broadcast: s &8pinches r
+      far:
+        sender: r is too far away
+        receiver: <BLANK>
+        broadcast: <BLANK>
