@@ -7,15 +7,15 @@ emotes:
     single:
       args: 1
       sender: <BLANK>
-      broadcast: s &chugs the thin air
+      broadcast: s &chugs&f the thin air
     multiple:
       args: 2
       close:
         sender: s &chugs r
         broadcast: s &chugs r
-        receiver: s &chugs you tightly!
+        receiver: s &chugs&f you tightly!
       far:
-        sender: s &chugs from far away!
+        sender: s &chugs&f from far away!
         broadcast: s wants to &chug r
         receiver: s sends you a virtual &chug
   kiss:
@@ -30,12 +30,12 @@ emotes:
       args: 2
       close:
         sender: s &dkisses r
-        receiver: Surprise!, s &dkisses you!
+        receiver: Surprise!, s &dkisses&f you!
         broadcast: s &dkisses r
       far:
-        sender: You send a &dkiss to r
-        receiver: s throws you a &d from afar
-        broadcast: s sent a &dkiss to r
+        sender: You send a &dkiss&f to r
+        receiver: s throws you a &dkiss&f from afar
+        broadcast: s sent a &dkiss&f to r
   cut:
     description: Cut yourself. Don't do this too often
     usage: /emote use cut
@@ -43,7 +43,7 @@ emotes:
     single:
       args: 1
       sender: <BLANK>
-      broadcast: s &4cuts themselves, ouch!
+      broadcast: s &4cuts&f themselves, ouch!
     multiple:
       args: -1
       close:
@@ -61,35 +61,35 @@ emotes:
     single:
       args: 1
       sender: <BLANK>
-      broadcast: s &ewaves to, uh, no one?
+      broadcast: s &ewaves&f to, uh, no one?
     multiple:
       args: 2
       close:
-        sender: You &ewave to r
-        receiver: s &ewaves to you!
-        broadcast: s &ewaves at r
+        sender: You &ewave&f to r
+        receiver: s &ewaves&f to you!
+        broadcast: s &ewaves&f at r
       far:
-        sender: Who are you waving at? Try to find someone first
+        sender: Who are you &ewaving&f at? Try to find someone first
         receiver: <BLANK>
         broadcast: <BLANK>
   smile:
-    description: Show off that beautiful face
+    description: Show off that beautiful smile
     usage: /emote use smile <optional receiver>
     maxdistance: 100
     single:
       args: 1
       sender: <BLANK>
-      broadcast: s &esmiles randomly
+      broadcast: s &esmiles&f randomly
     multiple:
       args: 2
       close:
-        sender: You &esmiles towards r
-        receiver: s &esmiles at you
-        broadcast: s &esmiles at r
+        sender: You &esmiles&f towards r
+        receiver: s &esmiles&f at you
+        broadcast: s &esmiles&f at r
       far:
-        sender: You &esmiles at r
-        receiver: s &esmiles at you
-        broadcast: s &esmiles at r
+        sender: You &esmiles&f at r
+        receiver: s &esmiles&f at you
+        broadcast: s &esmiles&f at r
   flush:
     description: Warm up those cheeks
     usage: /emote use flush <optional receiver>
@@ -101,13 +101,13 @@ emotes:
     multiple:
       args: 2
       close:
-        sender: You &cflush while looking at r
-        receiver: You notice s &cflushes while looking at you
-        broadcast: s &cflushes at the thought of r
+        sender: You &cflush&f while looking at r
+        receiver: You notice s &cflushes&f while looking at you
+        broadcast: s &cflushes&f at the thought of r
       far:
-        sender: You &cflush at the thought of r
-        receiver: Someone, somewhere, flushes at the thought of you
-        broadcast: s &cflushes at the thought of r
+        sender: You &cflush&f at the thought of r
+        receiver: Someone, somewhere, &cflushes&f at the thought of you
+        broadcast: s &cflushes&f at the thought of r
   laugh:
     description: Laugh at someone
     usage: /emote use laugh <optional receiver>
@@ -115,17 +115,17 @@ emotes:
     single:
       args: 1
       sender: You suddenly remembered a funny joke you heard once
-      broadcast: s &elaughs quietly to themselves
+      broadcast: s &elaughs&f quietly to themselves
     multiple:
       args: 2
       close:
-        sender: You &elaugh at r
-        receiver: s &elaughs at you
-        broadcast: s &elaughs at r
+        sender: You &elaugh&f at r
+        receiver: s &elaughs&f at you
+        broadcast: s &elaughs&f at r
       far:
-        sender: You &elaugh at the thought of r
-        receiver: You get the feeling someone is &elaughing at you
-        broadcast: s &elaughs at r
+        sender: You &elaugh&f at the thought of r
+        receiver: You get the feeling someone is &elaughing&f at you
+        broadcast: s &elaughs&f at r
   angry:
     description: Let your rage out
     usage: /emote use angry <optional receiver>
@@ -133,7 +133,7 @@ emotes:
     single:
       args: 1
       sender: You become &cangry
-      broadcast: s is really &cangry right now. Might want to stay away for a while
+      broadcast: s is really &cangry&f right now. Might want to stay away for a while
     multiple:
       args: 2
       close:
@@ -141,26 +141,9 @@ emotes:
         receiver: <BLANK>
         broadcast: <BLANK>
       far:
-        sender: You're &cangry at r
-        receiver: s is &cangry at you
-        broadcast: s is &cangry at r
-  rate:
-    description: Rate someone
-    usage: /emote use rate <receiver> <number>
-    maxdistance: -1
-    single:
-      sender: <BLANK>
-      broadcast: <BLANK>
-    multiple:
-      args: 3
-      close:
-        sender: <BLANK>
-        receiver: <BLANK>
-        broadcast: <BLANK>
-      far:
-        sender: You &erate r %d out of 10
-        receiver: s &erates you a %d out of 10
-        broadcast: s &e rates r &d out of 10
+        sender: You're &cangry&f at r
+        receiver: s is &cangry&f at you
+        broadcast: s is &cangry&f at r
   cry:
     description: Let those emotions out
     usage: /emote use cry
@@ -168,7 +151,7 @@ emotes:
     single:
       args: 1
       sender:
-      broadcast: s &1 cries :'(
+      broadcast: s &1cries :'(
     multiple:
       args: 0
       close:
@@ -186,7 +169,7 @@ emotes:
     single:
       args: 1
       sender: You're feeling on point today
-      broadcast: s is &3dancing in front of the mirror
+      broadcast: s is &3dancing&f in front of the mirror
     multiple:
       args: 2
       close:
@@ -208,26 +191,26 @@ emotes:
     multiple:
       args: 2
       close:
-        sender: You &dflirt with r
-        receiver: s &dflirts with you
-        broadcast: s &dflirts with r
+        sender: You &dflirt&f with r
+        receiver: s &dflirts&f with you
+        broadcast: s &dflirts&f with r
       far:
         sender: <BLANK>
         receiver: <BLANK>
-        broadcast: s sends a &dlove letter to r
+        broadcast: s sends a &dlove&f letter to r
   pinch:
     description: Pinch someone or yourself
     usage: /emote use pinch <optional receiver>
     maxdistance: 5
     single:
       args: 1
-      sender: You pinch yourself
+      sender: You &8pinch&f yourself
       broadcast: <BLANK>
     multiple:
       args: 2
       close:
         sender: You &8pinch r
-        receiver: s &8pinches you
+        receiver: s &8pinches&f you
         broadcast: s &8pinches r
       far:
         sender: r is too far away
