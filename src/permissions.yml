@@ -1,0 +1,21 @@
+# ======================================================= #
+#
+# here you can add more permissions
+# NB! this requires you to change the src code
+#
+# ======================================================= #
+
+permissions:
+  emote:
+    default:
+      - emote.basic
+      - emote.use
+    names:
+      - emote.basic
+      - emote.admin
+      - emote.add
+      - emote.edit
+      - emote.remove
+      - emote.use
+  
+players:

@@ -1,0 +1,84 @@
+# ======================================================= #
+# a file containing all available commands for the plugin
+# 
+# syntax
+# commands:
+#   <cmd>:
+#     user:
+#		info:
+#		  description: 
+#           - <text describing what is shown>
+#		    - <color of text>
+#       <label>:
+#         usage: 
+#           - <text on how to use command>
+#		    - <color of text>
+#         description: 
+#           - <text on what command does>
+#		    - <color of text>
+#     admin:
+#		info:
+#		  description:
+#           - <text describing what is shown>
+#		    - <color of text>
+#       <label>:
+#         usage:
+#           - <text on how to use command>
+#		    - <color of text>
+#         description:
+#           - <text on what command does>
+#		    - <color of text>
+#
+# cmd should match permission name so it can properly look up
+# <cmd>.admin privileges
+#
+# either user or admin tab can be left out if desired
+#
+# colors are given as &0-9, &a-b or &A-F
+# if no color is desired you can leave out the field
+#
+# ======================================================= #
+
+# extra information can be as long as wanted
+commands:
+  emote:
+    user:
+      info:
+        description: "&bAvailable commands"
+      help: 
+        usage: "&b/emote help"
+        description: "- Shows all available commands"
+      use: 
+        usage: "&b/emote use <name>"
+        description: "- Use an emote"
+      list: 
+        usage: "&b/emote list <num>"
+        description: "- Returns a list of all available emotes"
+      add: 
+        usage: "&b/emote add <name>"
+        description: "- Add a new emote. Remember to edit its values!"
+      edit: 
+        usage: "&b/emote edit <name> <option> <new value>"
+        description: "- Edit emote information. New value can't be more than 15 words"
+      edit_help: 
+        usage: "&b/emote edit help"
+        description: "- See all emote edit options"
+      remove: 
+        usage: "&b/emote remove <name>"
+        description: "- Remove an emote"
+      extra: 
+        description: "&aNB! /e also works"
+    admin:
+      info: 
+        description: "&bAdmin commands"
+      add: 
+        usage: "&b/emote add <permission> <player>"
+        description: "- Give a player permissions"
+      remove: 
+        usage: "&b/emote remove <permission> <player>"
+        description: "- Remove permission from player"
+      perm_list: 
+        usage: "&bemote permlist"
+        description: "- Give a player permissions"
+      extra: 
+        line1: "&aNB! Use the option 'all' to give every online player the specified permission"
