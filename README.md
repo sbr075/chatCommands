@@ -6,6 +6,11 @@ To be finished
 ## Todo
 
 ## Changelog
+### Version 0.3.5-alpha
+- Started work on organization before adding/refining features
+  #### Known issues
+  - Command "/emote list <num>" doesn't work
+  
 ### Version 0.3.5
 - Fixed editing, now it works as intended
 - Added permissions so server admin/OPs can choose who can do what
@@ -19,5 +24,3 @@ To be finished
 
 ### Version 0.1
 - Released a test version, chatEmotes, with one emote
-
-## Known issues
