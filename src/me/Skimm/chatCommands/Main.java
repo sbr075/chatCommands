@@ -1,11 +1,10 @@
 package me.Skimm.chatCommands;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.UUID;
+import me.Skimm.chatEmotes.*;
 
-import org.bukkit.Bukkit;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -14,32 +13,31 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.permissions.PermissionAttachment;
 import org.bukkit.plugin.java.JavaPlugin;
 
 /*
  * Known issues
- * 1. Color issues on text
- * 2. New values in edit only supports one word
- * 3. If values aren't set correctly there are no error message
+ * 1. emote list is none functional
  */
 
 /*
  * TODO
- * 1. Fix distance messages
+ * 1. Clean up
  */
 
 public class Main extends JavaPlugin implements Listener {
 	
-	public configManager emote;
-	public configManager permissions;
+	public MainConfigManager emote;
+	public MainConfigManager permissions;
+	public MainConfigManager commands;
 	
-	public HashMap<UUID, PermissionAttachment> playerPermissions = new HashMap<>();
+	public MessageHandling emoteMessage;
 
     @Override
     public void onEnable() {
-    	this.emote = new configManager(this, "emotes.yml");
-    	this.permissions = new configManager(this, "permissions.yml");
+    	emote = new MainConfigManager(this, "emotes.yml");
+    	permissions = new MainConfigManager(this, "permissions.yml");
+    	commands = new MainConfigManager(this, "commands.yml");
     	
     	this.getServer().getPluginManager().registerEvents(this, this);
         // Used during startup and reloads
@@ -58,7 +56,7 @@ public class Main extends JavaPlugin implements Listener {
     	if (permissions.getConfig().getConfigurationSection("players." + player.getUniqueId()) == null) {
     		// Set default perms
     		ConfigurationSection newPlayer = permissions.getConfig().createSection("players." + player.getUniqueId().toString());
-    		List<String> defaultPerms = permissions.getConfig().getStringList("permissions.default");
+    		List<String> defaultPerms = permissions.getConfig().getStringList("permissions.emote.default");
     		for (String key : defaultPerms) {
     			newPlayer.set("perms." + key, key);
     		}
@@ -77,258 +75,71 @@ public class Main extends JavaPlugin implements Listener {
     }
     
     private boolean checkPerms(Player player, String perm) {
-    	for (String key : permissions.getConfig().getConfigurationSection("players." + player.getUniqueId() + ".perms.emote").getKeys(false)) {
-    		if (perm.equalsIgnoreCase(permissions.getConfig().getString("players." + player.getUniqueId() + ".perms.emote." + key))) {
-    			return true;
-    		}
+    	// Check users permissions
+    	String token = perm.split("\\.")[1];
+    	if (player.isOp() || permissions.getConfig().getConfigurationSection("players." + player.getUniqueId() + ".perms.emote").contains(token)) {
+    		return true;
     	}
-    	return false;
+    	else {
+    		// Permission not found
+        	player.sendMessage(ChatColor.RED + "You do not have permissions to use this command. If you believe this is a mistake please report it to the server administrator");
+        	return false;
+    	}
     }
 
-	private void msgSend(Player sender, String[] argv, String msg, int num) {
-    	Player receiver = null;
-    	if (argv.length >= 3) {
-    		try {
-    			receiver = sender.getServer().getPlayer(argv[2]);
-    		}
-    		catch (Exception e) {
-    			sender.sendMessage("Can't find player '" + argv[2] + "'");
-    		}
-    	}
-    	
-    	switch(num) {
-		case 1: // sender
-			sender.sendMessage(msg);
-			break;
-			
-		case 2: // broadcast
-			Bukkit.broadcastMessage(msg);
-			break;
-			
-		case 3: // receiver
-			receiver.sendMessage(msg);
-			break;	
-		}
-    }
-    
-    private boolean msgParser(Player sender, String[] argv, ArrayList<ArrayList<String>> emoteAllInfo) {
-    	int maxDistance, snumArgs, mnumArgs;
-    	maxDistance = Integer.parseInt(emoteAllInfo.get(0).get(0));
-    	snumArgs = Integer.parseInt(emoteAllInfo.get(1).get(0));
-    	mnumArgs = Integer.parseInt(emoteAllInfo.get(2).get(0));
-    	
-
-    	for (int i = 1; i < emoteAllInfo.size(); i++) {
-    		if ((argv.length - 1 ) < Integer.parseInt(emoteAllInfo.get(i).get(0)))
-    			continue;
-    		
-    		for (int j = 1; j < emoteAllInfo.get(i).size(); j++) {
-    			if (emoteAllInfo.get(i).get(j).equalsIgnoreCase("<BLANK>"))
-    				continue;
-    			
-    			// Skips empty cases
-    			switch(i) {
-    			case 1:
-    				if (snumArgs <= 0 || (argv.length - 1) != snumArgs)
-    					continue;
-    				break;
-    			case 2:
-    				if (mnumArgs <= 0 || (argv.length - 1) != mnumArgs)
-    					continue;
-    				break;
-    			}
-
-    			Player receiver = null;
-    	    	if (argv.length >= 3) {
-    	    		try {
-    	    			receiver = sender.getServer().getPlayer(argv[2]);
-    	    		}
-    	    		catch (Exception e) {
-    	    			sender.sendMessage("Emote " + argv[1] + " is set up wrong or receiver doesn't exist, use /e edit to fix it");
-    	    		}
-    	    	}
-        		
-    			String msg = "";
-        		String[] tokens = emoteAllInfo.get(i).get(j).split(" ");
-
-            	ArrayList<String> thSplit = new ArrayList<String>();
-
-            	int sCount, rCount, first;
-            	sCount = rCount = first = 0;
-            	
-            	String tmp = "";
-            	for (String word : tokens) {
-            		if (sCount > 1 || rCount > 1) {
-            			sender.sendMessage(ChatColor.RED + "Message can't have more than one sender/receiver");
-            			return true;
-            		}
-            		
-            		if (word.length() > 1) {
-            			tmp += word + " ";
-            			continue;
-            		}
-            		
-            		if (word.equalsIgnoreCase("s")) {
-            			thSplit.add(tmp);
-            			
-            			tmp = "";
-            			sCount++;
-            			
-            			if (rCount == 0) {
-            				first = 1;
-            			}
-            		}
-            		
-            		else if (word.equalsIgnoreCase("r")) {
-            			thSplit.add(tmp);
-            			
-            			tmp = " ";
-            			rCount++;
-            			
-            			if (sCount == 0) {
-            				first = 2;
-            			}
-            		}
-            	}
-            	
-            	if (sCount != 0 || rCount != 0)
-            		thSplit.add(tmp);
-            	
-            	// sCount and rCount is 0
-            	switch(thSplit.size()) {
-            	case 0:
-            		msg = ChatColor.translateAlternateColorCodes('&', emoteAllInfo.get(i).get(j));
-            		break;
-            	
-            	// sCount or rCount is 1 (single arg)
-            	case 2:
-            		if (thSplit.get(0).equalsIgnoreCase("")) { // start
-            			switch(sCount) {
-            			case 0: // r
-            				msg = ChatColor.translateAlternateColorCodes('&', receiver.getDisplayName() + " " + thSplit.get(1));
-            				break;
-            				
-            			case 1: // s
-            				msg = ChatColor.translateAlternateColorCodes('&', sender.getDisplayName() + " " + thSplit.get(1));
-            				break;
-            			}
-            		}
-            		else if (thSplit.get(1).equalsIgnoreCase("")) { // end
-            			switch(sCount) {
-            			case 0:
-            				msg = ChatColor.translateAlternateColorCodes('&', thSplit.get(0) + "&f" + receiver.getDisplayName());
-            				break;
-            			case 1:
-            				msg = ChatColor.translateAlternateColorCodes('&', thSplit.get(0) + "&f" + sender.getDisplayName());
-            				break;
-            			}
-            		}
-            		else { // middle
-            			switch(sCount) {
-            			case 0:
-            				msg = ChatColor.translateAlternateColorCodes('&', thSplit.get(0) + "&f" + receiver.getDisplayName() + thSplit.get(1));
-            				break;
-            			}
-            		}
-            		break;
-            	
-            	// sCount and rCount is 1 
-            	case 3:
-            		// Check if distance is negative or zero
-            		if (maxDistance <= 0) {
-            			// If so, skip close
-            			if (i >= 5 && i > 8) {
-            				continue;
-            			}
-            		}
-            		if (thSplit.get(0).equalsIgnoreCase("") && thSplit.get(2).equalsIgnoreCase("")) { // start end
-            			switch(first) {
-            			case 1: // s first
-            				msg = ChatColor.translateAlternateColorCodes('&', sender.getDisplayName() + " " + thSplit.get(1) + "&f" + receiver.getDisplayName());
-            				break;
-            			case 2: // r first
-            				msg = ChatColor.translateAlternateColorCodes('&', receiver.getDisplayName() + " " + thSplit.get(1) + "&f" +  sender.getDisplayName());
-            				break;
-            			}
-            		}
-            		else if (thSplit.get(0).equalsIgnoreCase("")) { // start middle
-            			switch(first) {
-        	    		case 1: // s first
-        	    			msg = ChatColor.translateAlternateColorCodes('&', sender.getDisplayName() + " " + thSplit.get(1) + "&f" + receiver.getDisplayName()) + " " + thSplit.get(2);
-        					break;
-        				case 2: // r first
-        					msg = ChatColor.translateAlternateColorCodes('&', receiver.getDisplayName() + " " + thSplit.get(1) + "&f" + sender.getDisplayName()) + " " + thSplit.get(2);
-        					break;
-        				}
-            		}
-            		else if (thSplit.get(2).equalsIgnoreCase("")) { // middle end 
-            			switch(first) {
-        	    		case 1: // s first
-        	    			msg = ChatColor.translateAlternateColorCodes('&', thSplit.get(0) + "&f" +  sender.getDisplayName() + thSplit.get(1) + "&f" +  receiver.getDisplayName());
-        					break;
-        				case 2: // r first
-        					msg = ChatColor.translateAlternateColorCodes('&', thSplit.get(0) + "&f" +  receiver.getDisplayName() + thSplit.get(1) + "&f" +  sender.getDisplayName());
-        					break;
-        				}
-            		}
-            		else { // middle middle
-            			switch(first) {
-        	    		case 1: // s first
-        	    			msg = ChatColor.translateAlternateColorCodes('&', thSplit.get(0) + "&f" + sender.getDisplayName() + " " + thSplit.get(1) + "&f" + receiver.getDisplayName() + " " + thSplit.get(2));
-        					break;
-        				case 2: // r first
-        					msg = ChatColor.translateAlternateColorCodes('&', thSplit.get(0) + "&f" + receiver.getDisplayName() + " " + thSplit.get(1) + "&f" + sender.getDisplayName() + " " + thSplit.get(2));
-        					break;
-        				}
-            		}
-            		
-            		break;
-            		
-            	default:
-            		sender.sendMessage(ChatColor.RED + "Something went wrong! Please report this to the mod author");
-            	}
-            	
-            	// Send message
-            	msgSend(sender, argv, msg, j);
-    		}
-    	}
-    	
-    return true;
-    }
+	
 
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] argv) {
-        if (label.equalsIgnoreCase("emote") || label.equalsIgnoreCase("e")) {
-        	
-            // Player
-            if (sender instanceof Player) {
-            	Player player = (Player) sender;
-          
-            	String command = argv[0].toLowerCase();
-
-            	switch (command) {
+        if (argv.length == 0) {
+        	sender.sendMessage("Invalid use of command");
+        	return true;
+        }
+        
+    	String command = argv[0].toLowerCase();
+    	
+    	/*
+    	 * Supported command list
+    	 * emote/e
+    	 */
+    	
+    	if (sender instanceof Player) {
+    		Player player = (Player) sender;
+    		
+    		// Check what label was called
+    		switch (label) {
+        	case "e":
+        	case "emote":
+        		switch (command) {
             	// General functions
             	case "help":
         			if (checkPerms(player, "emote.basic") || player.isOp()) {
-	            		player.sendMessage(ChatColor.BLUE + "Available commands");
-	            		player.sendMessage(ChatColor.AQUA + "/emote help\n" + ChatColor.WHITE + "- Shows all available commands");
-	            		player.sendMessage(ChatColor.AQUA + "/emote use <name>\n" + ChatColor.WHITE + "- Use an emote");
-	            		player.sendMessage(ChatColor.AQUA + "/emote list <num>\n" + ChatColor.WHITE + "- Returns a list of all available emotes");
-	            		player.sendMessage(ChatColor.AQUA + "/emote add <name>\n" + ChatColor.WHITE + "- Add a new emote. Remember to edit its values!");
-	            		player.sendMessage(ChatColor.AQUA + "/emote edit <name> <option> <new value>\n" + ChatColor.WHITE + "- Edit emote information. New value can't be more than 15 words");
-	            		player.sendMessage(ChatColor.AQUA + "/emote edit help\n" + ChatColor.WHITE + "- See all emote edit options");
-	            		player.sendMessage(ChatColor.AQUA + "/emote remove <name>\n" + ChatColor.WHITE + "- Remove an emote");
-	            		player.sendMessage(ChatColor.GREEN + "NB! /e also works");
-	            		
-	            		if (checkPerms(player, "emote.admin") || player.isOp()) {
-	            			player.sendMessage(ChatColor.BLUE + "\nAdmin commands");
-	            			player.sendMessage(ChatColor.AQUA + "/emote add <permission> <player>\n" + ChatColor.WHITE + "- Give a player permissions");
-	            			player.sendMessage(ChatColor.AQUA + "/emote remove <permission> <player>\n" + ChatColor.WHITE + "- Remove permission from player");
-	            			player.sendMessage(ChatColor.AQUA + "/emote permlist\n" + ChatColor.WHITE + "- Give a player permissions");
-	            			player.sendMessage(ChatColor.GREEN + "NB! Use the option 'all' to give every online player the specified permission");
-	            		}
-            		}
-            		else {
-            			player.sendMessage(ChatColor.RED + "You do not have permissions to use this command. If you believe this is a mistake please report it to the server administrator");
+        				/*
+        				 * cmdName - any cmd
+        				 */
+        				for (String cmdName : commands.getConfig().getConfigurationSection("commands").getKeys(false)) {
+        					/*
+            				 * titleName - user, admin
+            				 */
+            				for (String titleName : commands.getConfig().getConfigurationSection("commands." + cmdName).getKeys(false)) {
+            					// Prevent normal players from seeing admin help tab
+            					if (titleName.equalsIgnoreCase("admin")) {
+            						if (!checkPerms(player, cmdName + ".admin") || !player.isOp()) {
+            							break;
+            						}
+            					}
+            					/*
+            					 * key1 - info, <label>
+            					 */
+            					for (String labelName : commands.getConfig().getConfigurationSection("commands." + cmdName + "." + titleName).getKeys(false)) {
+            						/*
+        	            			 * key2 - description, usage
+        	            			 */
+            						for (String infoName: commands.getConfig().getConfigurationSection("commands." + cmdName + "." + titleName + "." + labelName).getKeys(false)) {
+            							player.sendMessage(ChatColor.translateAlternateColorCodes('&', commands.getConfig().getString("commands." + cmdName + "." + titleName + "." + labelName + "." + infoName)));
+            						}
+        	            		}
+            				}
+        				}
             		}
         			break;
         			
@@ -367,7 +178,7 @@ public class Main extends JavaPlugin implements Listener {
 	            							player.sendMessage(ChatColor.DARK_AQUA + info);
 	            						}
 	            						else if (key2.equalsIgnoreCase("description")) {
-	            							player.sendMessage(ChatColor.DARK_AQUA + "" + ChatColor.ITALIC + "- " +  info);
+	            							player.sendMessage(ChatColor.DARK_AQUA + "- " +  info);
 	            						}
 	            					}
 	            					
@@ -384,14 +195,11 @@ public class Main extends JavaPlugin implements Listener {
 	            		else {
 	            			player.sendMessage("Invalid use of function, enter a number between 1 - " + pageLimit);
 	            		}
-            		}	
-            		else {
-            			player.sendMessage(ChatColor.RED + "You do not have permissions to use this command. If you believe this is a mistake please report it to the server administrator");
             		}
 	            	break;
 	            
             	case "permlist":
-            		if (checkPerms(player, "emote.admin") || player.isOp()) {
+            		if (checkPerms(player, "emote.admin")) {
 	            		if (argv.length == 1) {
 	            			player.sendMessage(ChatColor.BLUE + "" + ChatColor.BOLD + "Permission name list");
 	            			List<String> allPerms = permissions.getConfig().getStringList("permissions.names");
@@ -404,14 +212,11 @@ public class Main extends JavaPlugin implements Listener {
 	            			player.sendMessage("Invalid use of function");
 	            		}
             		}	
-            		else {
-            			player.sendMessage(ChatColor.RED + "You do not have permissions to use this command. If you believe this is a mistake please report it to the server administrator");
-            		}
             		break;
 
             	case "add":
             		if (argv.length == 2) {
-            			if (checkPerms(player, "emote.add") || player.isOp()) {
+            			if (checkPerms(player, "emote.add")) {
 	            			// /emote add <name>
 	            			String emoteName = argv[1];
 	
@@ -454,13 +259,10 @@ public class Main extends JavaPlugin implements Listener {
 	            			
 	            			emote.saveConfig();
             			}
-            			else {
-                			player.sendMessage(ChatColor.RED + "You do not have permissions to use this command. If you believe this is a mistake please report it to the server administrator");
-                		}
             		}
             		else if (argv.length == 3) {
             			// /emote add <permission> <player>
-            			if (checkPerms(player, "emote.admin") || player.isOp()) {
+            			if (checkPerms(player, "emote.admin")) {
             				List<String> allPerms = permissions.getConfig().getStringList("permissions.names");
             				
             				if (!(allPerms.contains(argv[1]))) {
@@ -468,9 +270,8 @@ public class Main extends JavaPlugin implements Listener {
             					return true;
             				}
             				
-            				Player receiver = null;
             				try {
-            	    			receiver = sender.getServer().getPlayer(argv[2]);
+            	    			sender.getServer().getPlayer(argv[2]);
             	    		}
             	    		catch (Exception e) {
             	    			sender.sendMessage("Can't find player '" + argv[2] + "'");
@@ -482,9 +283,6 @@ public class Main extends JavaPlugin implements Listener {
 
             				permissions.saveConfig();
             			}
-        				else {
-                			player.sendMessage(ChatColor.RED + "You do not have permissions to use this command. If you believe this is a mistake please report it to the server administrator");
-                		}
             		}
             		else {
             			player.sendMessage(ChatColor.RED + "Invalid use of command. Type /emote help for more information");
@@ -492,32 +290,25 @@ public class Main extends JavaPlugin implements Listener {
             		break;
             	
             	case "edit":
-            		if (checkPerms(player, "emote.edit") || player.isOp()) {
+            		if (checkPerms(player, "emote.edit")) {
 	            		if (argv.length == 2) {
 	            			switch(argv[1]) {
 	            			case "help":
-	            				player.sendMessage(ChatColor.DARK_AQUA + "" + ChatColor.BOLD + "Emote edit options");
-	            				player.sendMessage(ChatColor.AQUA + "Description\n" + ChatColor.WHITE + "- Edit the description ");
-	            				player.sendMessage(ChatColor.AQUA + "Usage\n " + ChatColor.WHITE + "- the user how to use the emote");
-	            				player.sendMessage(ChatColor.AQUA + "Distance\n " + ChatColor.WHITE + "- How far users can be apart before it changes between close/far messages");
-	            				player.sendMessage(ChatColor.AQUA + "SSender\n " + ChatColor.WHITE + "- No optional reciever, sender return message");
-	            				player.sendMessage(ChatColor.AQUA + "SBroadcast\n " + ChatColor.WHITE + "- No optional receiver, broadcast return message");
-	            				player.sendMessage(ChatColor.AQUA + "MCSender\n " + ChatColor.WHITE + "- Optional receiver, close distance, sender return message");
-	            				player.sendMessage(ChatColor.AQUA + "MCBroadcast\n " + ChatColor.WHITE + "- Optional receiver, close distance, broadcast return message");
-	            				player.sendMessage(ChatColor.AQUA + "MCReceiver\n " + ChatColor.WHITE + "- Optional receiver, close distance, receiver return message");
-	            				player.sendMessage(ChatColor.AQUA + "MFSender\n " + ChatColor.WHITE + "- Optional receiver, far distance, sender return message");
-	            				player.sendMessage(ChatColor.AQUA + "MFBroadcast\n " + ChatColor.WHITE + "- Optional receiver, far distance, broadcast return message");
-	            				player.sendMessage(ChatColor.AQUA + "MFReceiver\n " + ChatColor.WHITE + "- Optional receiver, far distance, receiver return message");
-	            				player.sendMessage(ChatColor.DARK_AQUA + "\nExtra information");
-	            				player.sendMessage(ChatColor.AQUA + "If fields are set to <BLANK> they will not be sent out");
-	            				player.sendMessage(ChatColor.AQUA + "If distance is set to -1 close messages will not be sent");
-	            				player.sendMessage(ChatColor.AQUA + "If args (single/multiple) are set to -1 it will not send out messages in those categories");
+	            				for (String key : emote.getConfig().getConfigurationSection("emote_commands.options").getKeys(false)) {
+	            					for (String info : emote.getConfig().getConfigurationSection("emote_commands.options." + key).getKeys(false)) {
+	            						if (info.equalsIgnoreCase("path"))
+	            							continue;
+	            						
+	            						if (!(key.equalsIgnoreCase("extra")) && !(key.equalsIgnoreCase("info")))
+	            							player.sendMessage(ChatColor.AQUA + key);
+	            						
+	            						player.sendMessage(ChatColor.translateAlternateColorCodes('&', emote.getConfig().getString("emote_commands.options." + key + "." + info)));
+	            					}
+	            				}
 	            				break;
 	            			default:
 	            				player.sendMessage(ChatColor.RED + "Invalid use of command. Type /emote help for more information");
 	            			}
-	            			// /emote edit help
-	            			
 	            		}
 	            		else if (argv.length >= 4 || argv.length <= 20) {
 	            			// /emote edit <name> <option> <new value>
@@ -532,93 +323,20 @@ public class Main extends JavaPlugin implements Listener {
 	
 	            			// Scan for exisitng name
 	            			if (!(emote.getConfig().contains("emotes." + emoteName))) {
-	            				player.sendMessage("Emote " + emoteName + " doesn't exists");
+	            				player.sendMessage("Emote " + emoteName + " doesn't exist");
 	        					return true;
 	            			}
 	            			
-	            			// Setup new emote slot
-	            			ConfigurationSection editEmote = emote.getConfig().createSection("emotes." + emoteName);
-	            			
-	            			switch(option) {
-	            			case "description":
-	            				if (!(newdesc instanceof String)) {
-	            					player.sendMessage(option + " needs to be a string");
-	            					break;
-	            				}
-	            				editEmote.set("description", newdesc);
-	            				break;
-	            			case "usage":
-	            				if (!(newdesc instanceof String)) {
-	            					player.sendMessage(option + " needs to be a string");
-	            					break;
-	            				}
-	            				editEmote.set("usage", newdesc);
-	            				break;
-	            			case "distance":
-	            				if (newdesc instanceof String) {
-	            					player.sendMessage(option + " needs to be a int");
-	            					break;
-	            				}
-	            				editEmote.set("maxdistance", newdesc);
-	            				break;
-	            			case "ssender":
-	            				if (!(newdesc instanceof String)) {
-	            					player.sendMessage(option + " needs to be a string");
-	            					break;
-	            				}
-	            				editEmote.set("single.sender", newdesc);
-	            				break;
-	            			case "sbroadcast":
-	            				if (!(newdesc instanceof String)) {
-	            					player.sendMessage(option + " needs to be a string");
-	            					break;
-	            				}
-	            				editEmote.set("single.broadcast", newdesc);
-	            				break;
-	            			case "mcsender":
-	            				if (!(newdesc instanceof String)) {
-	            					player.sendMessage(option + " needs to be a string");
-	            					break;
-	            				}
-	            				editEmote.set("multiple.close.sender", newdesc);
-	            				break;
-	            			case "mcreceiver":
-	            				if (!(newdesc instanceof String)) {
-	            					player.sendMessage(option + " needs to be a string");
-	            					break;
-	            				}
-	            				editEmote.set("multiple.close.broadcast", newdesc);
-	            				break;
-	            			case "mcbroadcast":
-	            				if (!(newdesc instanceof String)) {
-	            					player.sendMessage(option + " needs to be a string");
-	            					break;
-	            				}
-	            				editEmote.set("multiple.close.receiver", newdesc);
-	            				break;
-	            			case "mfsender":
-	            				if (!(newdesc instanceof String)) {
-	            					player.sendMessage(option + " needs to be a string");
-	            					break;
-	            				}
-	            				editEmote.set("multiple.far.sender", newdesc);
-	            				break;
-	            			case "mfbroadcast":
-	            				if (!(newdesc instanceof String)) {
-	            					player.sendMessage(option + " needs to be a string");
-	            					break;
-	            				}
-	            				editEmote.set("multiple.far.broadcast", newdesc);
-	            				break;
-	            			case "mfreceiver":
-	            				if (!(newdesc instanceof String)) {
-	            					player.sendMessage(option + " needs to be a string");
-	            					break;
-	            				}
-	            				editEmote.set("multiple.far.receiver", newdesc);
-	            				break;
+	            			if (!(emote.getConfig().contains("emote_commands.options." + option)) || option.equalsIgnoreCase("info")) {
+	            				player.sendMessage("Option " + option + " doesn't exist");
+	            				return true;
 	            			}
 	            			
+	            			// Setup new emote slot
+	            			ConfigurationSection editEmote = emote.getConfig().getConfigurationSection("emotes." + emoteName);
+	            			String path = emote.getConfig().getString("emote_commands.options." + option + ".path");
+	            			editEmote.set(path, newdesc);
+
 	            			// Update amount count
 	            			int amount;
 	            			amount = emote.getConfig().getInt("emotes.amount");
@@ -630,14 +348,11 @@ public class Main extends JavaPlugin implements Listener {
 	            			player.sendMessage(ChatColor.RED + "Invalid use of command. Type /emote help for more information");
 	            		}
             		}
-            		else {
-            			player.sendMessage(ChatColor.RED + "You do not have permissions to use this command. If you believe this is a mistake please report it to the server administrator");
-            		}
             		break;
             	
             	case "remove":
             		if (argv.length == 2) {
-            			if (checkPerms(player, "emote.remove") || player.isOp()) {
+            			if (checkPerms(player, "emote.remove")) {
 	            			// /emote remove <name>
 	            			String emoteName = argv[1];
 	
@@ -656,12 +371,9 @@ public class Main extends JavaPlugin implements Listener {
 	            			
 	            			emote.saveConfig();
             			}
-            			else {
-            				player.sendMessage(ChatColor.RED + "You do not have permissions to use this command. If you believe this is a mistake please report it to the server administrator");
-            			}
             		}
             		else if (argv.length == 3) {
-            			if (checkPerms(player, "emote.admin") || player.isOp()) {
+            			if (checkPerms(player, "emote.admin")) {
             				List<String> allPerms = permissions.getConfig().getStringList("permissions.names");
             				
             				if (!(allPerms.contains(argv[1]))) {
@@ -669,9 +381,8 @@ public class Main extends JavaPlugin implements Listener {
             					return true;
             				}
             				
-            				Player receiver = null;
             				try {
-            	    			receiver = sender.getServer().getPlayer(argv[2]);
+            	    			sender.getServer().getPlayer(argv[2]);
             	    		}
             	    		catch (Exception e) {
             	    			sender.sendMessage("Can't find player '" + argv[2] + "'");
@@ -683,9 +394,6 @@ public class Main extends JavaPlugin implements Listener {
 
             				permissions.saveConfig();
             			}
-            			else {
-            				player.sendMessage(ChatColor.RED + "You do not have permissions to use this command. If you believe this is a mistake please report it to the server administrator");
-            			}
             		}
             		else {
             			player.sendMessage(ChatColor.RED + "Invalid use of command. Type /emote help for more information");
@@ -693,7 +401,7 @@ public class Main extends JavaPlugin implements Listener {
             		break;
             		
             	case "use":
-            		if (checkPerms(player, "emote.use") || player.isOp()) {
+            		if (checkPerms(player, "emote.use")) {
 	            		String emoteName = argv[1].toLowerCase();
 	            		ArrayList<String> emoteGenInfo = new ArrayList<String>();
 	            		ArrayList<String> emoteSingleInfo = new ArrayList<String>();
@@ -741,21 +449,24 @@ public class Main extends JavaPlugin implements Listener {
 	            		emoteAllInfo.add(emoteGenInfo);
 	            		emoteAllInfo.add(emoteSingleInfo);
 	            		emoteAllInfo.add(emoteMultipleInfo);
-	            		
-	            		msgParser(player, argv, emoteAllInfo);
-            		}
-            		else {
-            			player.sendMessage(ChatColor.RED + "You do not have permissions to use this command. If you believe this is a mistake please report it to the server administrator");
+
+	            		emoteMessage = new MessageHandling(player, argv, emoteAllInfo);
             		}
             		break;
 
             	default:
             		player.sendMessage(ChatColor.RED + "Invalid use of command. Type /emote help for more information");
             		break;
-            	}
-            }
-        }
-        else {
+        		}
+        		
+        		break;
+        		
+        	default:
+        		player.sendMessage(ChatColor.RED + "Command not found!");
+        		break;
+        	}
+    	}
+    	else {
         	sender.sendMessage("Console can't use these commands!");
             return true;
             // Console

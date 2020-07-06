@@ -1,3 +1,33 @@
+# ======================================================= #
+# a file containing all available emotes
+# emotes can either be added in-game or by following this syntax
+#
+# emotes:
+#   <emote name>:
+#     description: <description of emote>
+#     usage: <how to use emote>
+#     maxdistance: <distance between players before it switches between close/far>
+#     single:
+#       args: <number of args single requires>
+#       sender <message sender gets>
+#       broadcast: <message sent to the whole server>
+#     multiple:
+#       args: <number of args multiple requires>
+#       close: # This is sent if distance between player and receiver is less than max distance
+#         sender: <message sender gets>
+#         broadcast: <message sent to the whole server>
+#         receiver: <message receiver gets>
+#       far: # This is sent if distance between player and receiver is more than max distance
+#         sender: <message sender gets in response>
+#         broadcast: <message sent to the whole server>
+#         receiver: <message receiver gets>
+#
+# if maxdistance is set to 0 or -1 the close tab is nullified and wont be activated
+# if args is set to 0 or -1 the tab is nullified and wont be activated
+# if any of the string tabs are set to <BLANK> they will be ignored
+#
+# ======================================================= #
+
 emotes:
   amount: 14
   hug:
@@ -216,3 +246,46 @@ emotes:
         sender: r is too far away
         receiver: <BLANK>
         broadcast: <BLANK>
+        
+emote_commands:
+  options:
+    info:
+      description: "&bEmote edit options"
+    description:
+      description: "- Edit the description"
+      path: description
+    usage:
+      description: "- Show the user how to use the emote"
+      path: usage
+    distance:
+      description: "- How far users can be apart before it changes between close/far messages"
+      path: maxdistance
+    ssender:
+      description: "- No optional reciever, sender return message"
+      path: single.sender
+    sbroadcast:
+      description: "- No optional receiver, broadcast return message"
+      path: single.broadcast
+    mcsender:
+      description: "- Optional receiver, close distance, sender return message"
+      path: mutliple.close.sender
+    mcbroadcast:
+      description: "- Optional receiver, close distance, broadcast return message"
+      path: mutliple.close.receiver
+    mcreceiver:
+      description: "- Optional receiver, close distance, receiver return message"
+      path: mutliple.close.broadcast
+    mfsender:
+      description: "- Optional receiver, far distance, sender return message"
+      path: multiple.far.sender
+    mfbroadcast:
+      description: "- Optional receiver, far distance, broadcast return message"
+      path: multiple.far.broadcast
+    mfreceiver:
+      description: "- Optional receiver, far distance, receiver return message"
+      path: multiple.far.receiver
+    extra:
+      line1: "&aExtra information"
+      line2: "&aIf fields are set to <BLANK> they will not be sent out"
+      line3: "&aIf distance is set to -1 close messages will not be sent"
+      line4: "&aIf args (single/multiple) are set to -1 it will not send out messages in those categories"
