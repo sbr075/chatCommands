@@ -6,7 +6,7 @@ To be finished
 ## Todo
 
 ## Changelog
-### Version 0.3.5-alpha
+### Version 0.3.6-alpha
 - Started work on organization before adding/refining features
   #### Known issues
   - Command "/emote list <num>" doesn't work
