@@ -9,14 +9,14 @@ import java.util.logging.Level;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
-public class MainConfigManager {
+public class ConfigManager {
 	
 	private Main plugin;
 	private FileConfiguration customConfig = null;
 	private File configFile = null;
 	private String configName;
 	
-	public MainConfigManager(Main plugin, String name) {
+	public ConfigManager(Main plugin, String name) {
 		this.plugin = plugin;
 		configName = name;
 		

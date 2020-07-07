@@ -6,20 +6,9 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 
-public class MessageHandling {	
-	private Player sender;
-	private String[] argv;
-	private ArrayList<ArrayList<String>> emoteAllInfo;
-	
-	public MessageHandling(Player player, String[] argv, ArrayList<ArrayList<String>> emoteAllInfo) {
-		this.sender = player;
-		this.argv = argv;
-		this.emoteAllInfo = emoteAllInfo;
-		
-		msgParser();
-	}
-	
-	private void msgSend(String msg, int msgType) {
+public class MessageHandler {	
+
+	private void msgSend(Player sender, String msg, String[] argv, int msgType) {
     	Player receiver = null;
     	if (argv.length >= 3) {
     		try {
@@ -45,7 +34,7 @@ public class MessageHandling {
 		}
     }
     
-    private boolean msgParser() {
+    public void msgParser(Player sender, String[] argv, ArrayList<ArrayList<String>> emoteAllInfo) {
     	int maxDistance, snumArgs, mnumArgs;
     	maxDistance = Integer.parseInt(emoteAllInfo.get(0).get(0));
     	snumArgs = Integer.parseInt(emoteAllInfo.get(1).get(0));
@@ -93,7 +82,7 @@ public class MessageHandling {
             	for (String word : tokens) {
             		if (sCount > 1 || rCount > 1) {
             			sender.sendMessage(ChatColor.RED + "Message can't have more than one sender/receiver");
-            			return true;
+            			return;
             		}
             		
             		if (word.length() > 1) {
@@ -222,10 +211,8 @@ public class MessageHandling {
             	}
 
             	// Send message
-            	msgSend(msg, j);
+            	msgSend(sender, msg, argv, j);
     		}
     	}
-    	
-    return true;
     }
 }

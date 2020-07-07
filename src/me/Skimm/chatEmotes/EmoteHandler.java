@@ -22,44 +22,8 @@ public class EmoteHandler {
 		
 		String command = argv[0].toLowerCase();
 		
-		// Check permissions of player
-		if (!main.checkPermissions(player, label, command)) {
-			player.sendMessage(ChatColor.RED + "You do not have permissions to use this command.\n If you believe this is a mistake contact a server administrator");
-			return;
-		}
-		
 		switch (command) {
-    	// General functions
-    	case "help":
-    		if (argv.length == 1) {
-				/*
-				 * titleName - user, admin
-				 */
-				for (String titleName : main.commands.getConfig().getConfigurationSection("commands." + label).getKeys(false)) {
-					// Prevent normal players from seeing admin help tab
-					if (titleName.equalsIgnoreCase("admin")) {
-						if (!main.checkSpecificPermission(player, label + ".admin")) {
-							break;
-						}
-					}
-					/*
-					 * key1 - info, <label>
-					 */
-					for (String labelName : main.commands.getConfig().getConfigurationSection("commands." + label + "." + titleName).getKeys(false)) {
-						/*
-            			 * key2 - description, usage
-            			 */
-						for (String infoName: main.commands.getConfig().getConfigurationSection("commands." + label + "." + titleName + "." + labelName).getKeys(false)) {
-							player.sendMessage(ChatColor.translateAlternateColorCodes('&', main.commands.getConfig().getString("commands." + label + "." + titleName + "." + labelName + "." + infoName)));
-						}
-            		}
-				}
-    		}
-    		else {
-    			player.sendMessage(ChatColor.RED + "Invalid use of command. Type /" + label + " help for more information");
-    		}
-			break;
-			
+    	// Special functions
     	case "list":
     		if (argv.length == 2) {
     			int numEmotes, pageLimit, pageNum;
@@ -110,20 +74,6 @@ public class EmoteHandler {
     			player.sendMessage(ChatColor.RED + "Invalid use of command. Type /emote help for more information");
     		}
         	break;
-        
-    	case "permlist":
-    		if (argv.length == 1) {
-    			player.sendMessage(ChatColor.BLUE + "" + ChatColor.BOLD + "Permission name list");
-    			List<String> allPerms = main.permissions.getConfig().getStringList("permissions." + label + ".names");
-    			
-    			for (String key : allPerms) {
-    				player.sendMessage("- " + ChatColor.AQUA + key);
-    			}
-    		}
-    		else {
-    			player.sendMessage(ChatColor.RED + "Invalid use of command. Type /emote help for more information");
-    		}
-    		break;
 
     	case "add":
     		if (argv.length == 2) {

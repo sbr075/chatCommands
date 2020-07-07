@@ -21,6 +21,46 @@ import org.bukkit.plugin.java.JavaPlugin;
  */
 
 /*
+ * Planned features
+ * 1. Cooldown on commands
+ * 2. Broadcast
+ *    1. One time
+ *       1. Send (msg)
+ *    2. Interval
+ *       1. Add (name, msg, interval)
+ *       2. Remove (name)
+ *       3. Edit (name, msg or interval)
+ *    3. Sound (?)
+ * 3. Moderator utilities
+ *    1. Warn
+ *       1. Log for keeping track of warnings
+ *    2. List to show all warned players
+ *       1. Player UUID and display name
+ *       2. Show warning description
+ *       3. Show number of warnings
+ *    3. Timeouts
+ *       1. Mute
+ *       2. Prevent join access
+ * 4. Chat system
+ *    1. Chat modes
+ *       1. Whisper
+ *       2. Local
+ *       3. Shout
+ *       4. Global
+ *       5. Muted/unmuted
+ *    2. Group/party chat
+ *       1. Group is permanent
+ *       2. Party is temporary
+ *       3. Add/invite and remove/kick
+ *    3. Turned on/off
+ * 5. Titles
+ *    1. Permissions can be tied to them (?)
+ * 6. Logs
+ *    1. Block break
+ *    2. Player open chest
+ */
+
+/*
  * TODO
  * 1. Clean up
  */
@@ -127,16 +167,70 @@ public class Main extends JavaPlugin implements Listener {
     	if (sender instanceof Player) {
     		// Cast sender to player
     		Player player = (Player) sender;
-
-    		switch (label) {
-        	case "emote":
-        		emoteCommands.commandHandler(player, label, argv);
+    		
+    		// Check permissions of player
+    		if (!checkPermissions(player, label, argv[0].toLowerCase())) {
+    			player.sendMessage(ChatColor.RED + "You do not have permissions to use this command.\n If you believe this is a mistake contact a server administrator");
+    			return true;
+    		}
+    		
+    		/* 
+    		 * Checks general functions, if not match
+    		 * it will check special functions for given label
+    		 */
+    		
+    		switch (argv[0].toLowerCase()) {
+    		case "help":
+    			if (argv.length == 1) {
+    				// titleName - user, admin
+    				for (String titleName : commands.getConfig().getConfigurationSection("commands." + label).getKeys(false)) {
+    					// Prevent normal players from seeing admin help tab
+    					if (titleName.equalsIgnoreCase("admin")) {
+    						if (!checkSpecificPermission(player, label + ".admin")) {
+    							break;
+    						}
+    					}
+    					
+    					// key1 - info, <label>
+    					for (String labelName : commands.getConfig().getConfigurationSection("commands." + label + "." + titleName).getKeys(false)) {
+    						
+    						// key2 - description, usage
+    						for (String infoName: commands.getConfig().getConfigurationSection("commands." + label + "." + titleName + "." + labelName).getKeys(false)) {
+    							player.sendMessage(ChatColor.translateAlternateColorCodes('&', commands.getConfig().getString("commands." + label + "." + titleName + "." + labelName + "." + infoName)));
+    						}
+                		}
+    				}
+        		}
+        		else {
+        			player.sendMessage(ChatColor.RED + "Invalid use of command. Type /" + label + " help for more information");
+        		}
+    			break;
+    		
+    		case "permlist":
+        		if (argv.length == 1) {
+        			player.sendMessage(ChatColor.BLUE + "" + ChatColor.BOLD + "Permission name list");
+        			List<String> allPerms = permissions.getConfig().getStringList("permissions." + label + ".names");
+        			
+        			for (String key : allPerms) {
+        				player.sendMessage("- " + ChatColor.AQUA + key);
+        			}
+        		}
+        		else {
+        			player.sendMessage(ChatColor.RED + "Invalid use of command. Type /emote help for more information");
+        		}
         		break;
-        		
-        	default:
-        		player.sendMessage(ChatColor.RED + "Command not found!");
-        		break;
-        	}
+    		
+    		default: // Special functions
+	    		switch (label) {
+	        	case "emote":
+	        		emoteCommands.commandHandler(player, label, argv);
+	        		break;
+	        		
+	        	default:
+	        		player.sendMessage(ChatColor.RED + "Command not found!");
+	        		break;
+	        	}
+    		}
     	}
     	else {
         	sender.sendMessage("Console can't use these commands!");
