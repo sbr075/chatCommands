@@ -31,6 +31,13 @@ import org.bukkit.plugin.java.JavaPlugin;
  *       2. Remove (name)
  *       3. Edit (name, msg or interval)
  *    3. Sound (?)
+ *    4. Broadcast info
+ *       1. Name
+ *       2. Message
+ *       3. Interval
+ *       4. Who made iet
+ *    5. List of all broadcasts
+ *       
  * 3. Moderator utilities
  *    1. Warn
  *       1. Log for keeping track of warnings
@@ -41,6 +48,12 @@ import org.bukkit.plugin.java.JavaPlugin;
  *    3. Timeouts
  *       1. Mute
  *       2. Prevent join access
+ *    4. Info
+ *       1. Who warned
+ *       2. Who got warned
+ *       3. When was played warned
+ *       4. Reason
+ *    5. Log all
  * 4. Chat system
  *    1. Chat modes
  *       1. Whisper
@@ -50,7 +63,20 @@ import org.bukkit.plugin.java.JavaPlugin;
  *       5. Muted/unmuted
  *    2. Group/party chat
  *       1. Group is permanent
+ *          1. Group leader
+ *             1. Remove others
+ *	           2. Disband
+ *	              1. Deletes group
+ *	           3. Can't leave, needs to disband
+ *          2. Group roles
+ *             1. Owner
+ *                1. All perms
+ *             2. Trusted
+ *                2. Invite
+ *             3. Member
+ *                3. Leave
  *       2. Party is temporary
+ *          1. Leave
  *       3. Add/invite and remove/kick
  *    3. Turned on/off
  * 5. Titles
@@ -97,13 +123,16 @@ public class Main extends JavaPlugin implements Listener {
     	if (permissions.getConfig().getConfigurationSection("players." + player.getUniqueId()) == null) {
     		// Set default perms
     		ConfigurationSection newPlayer = permissions.getConfig().createSection("players." + player.getUniqueId().toString());
-    		List<String> defaultPerms = permissions.getConfig().getStringList("permissions.emote.default");
+    		List<String> defaultPerms = permissions.getConfig().getStringList("permissions.default_user");
     		for (String key : defaultPerms) {
     			newPlayer.set("perms." + key, key);
     		}
     		
     		if (player.isOp()) {
-    			newPlayer.set("perms.emote.admin", "emote.admin");
+    			List<String> defaultAdmin = permissions.getConfig().getStringList("permissions.default_admin");
+    			for (String key : defaultAdmin) {
+    				newPlayer.set("perms." + key, key);
+    			}
     		}
 
     		// Notify player
@@ -174,26 +203,26 @@ public class Main extends JavaPlugin implements Listener {
     			return true;
     		}
     		
+    		String command = argv[0].toLowerCase();
+    		
     		/* 
     		 * Checks general functions, if not match
     		 * it will check special functions for given label
     		 */
     		
-    		switch (argv[0].toLowerCase()) {
+    		switch (command) {
     		case "help":
     			if (argv.length == 1) {
     				// titleName - user, admin
     				for (String titleName : commands.getConfig().getConfigurationSection("commands." + label).getKeys(false)) {
     					// Prevent normal players from seeing admin help tab
     					if (titleName.equalsIgnoreCase("admin")) {
-    						if (!checkSpecificPermission(player, label + ".admin")) {
+    						if (!checkSpecificPermission(player, label + ".admin"))
     							break;
-    						}
     					}
-    					
+    					player.sendMessage(" ");
     					// key1 - info, <label>
     					for (String labelName : commands.getConfig().getConfigurationSection("commands." + label + "." + titleName).getKeys(false)) {
-    						
     						// key2 - description, usage
     						for (String infoName: commands.getConfig().getConfigurationSection("commands." + label + "." + titleName + "." + labelName).getKeys(false)) {
     							player.sendMessage(ChatColor.translateAlternateColorCodes('&', commands.getConfig().getString("commands." + label + "." + titleName + "." + labelName + "." + infoName)));
@@ -205,7 +234,7 @@ public class Main extends JavaPlugin implements Listener {
         			player.sendMessage(ChatColor.RED + "Invalid use of command. Type /" + label + " help for more information");
         		}
     			break;
-    		
+    		// This is exclusively an "emote" feature for now
     		case "permlist":
         		if (argv.length == 1) {
         			player.sendMessage(ChatColor.BLUE + "" + ChatColor.BOLD + "Permission name list");
@@ -226,6 +255,22 @@ public class Main extends JavaPlugin implements Listener {
 	        		emoteCommands.commandHandler(player, label, argv);
 	        		break;
 	        		
+	        	case "broadcast":
+	        		player.sendMessage("This feature is not yet implemented");
+	        		break;
+	        	
+	        	case "mod":
+	        		player.sendMessage("This feature is not yet implemented");
+	        		break;
+	        	
+	        	case "chat":
+	        		player.sendMessage("This feature is not yet implemented");
+	        		break;
+	        	
+	        	case "title":
+	        		player.sendMessage("This feature is not yet implemented");
+	        		break;
+	        	
 	        	default:
 	        		player.sendMessage(ChatColor.RED + "Command not found!");
 	        		break;

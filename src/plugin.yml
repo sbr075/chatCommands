@@ -1,7 +1,15 @@
 main: me.Skimm.chatCommands.Main
 name: chatEmotes
-version: 0.3.6-alpha
+version: 0.4-alpha
 author: Skimm
 commands:
   emote:
-    usage: /emotes <command>
+    description: Use /emote help to see command list
+  broadcast:
+    description: Use /broadcast help to see command list
+  mod:
+    description: Use /mod help to see command list
+  chat:
+    description: Use /chat help to see command list
+  title:
+    description: Use /title help to see command list

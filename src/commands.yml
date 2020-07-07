@@ -5,7 +5,7 @@
 # commands:
 #   <cmd>:
 #     user:
-#		info:
+#		header:
 #		  description: 
 #           - <text describing what is shown>
 #		    - <color of text>
@@ -17,7 +17,7 @@
 #           - <text on what command does>
 #		    - <color of text>
 #     admin:
-#		info:
+#		header:
 #		  description:
 #           - <text describing what is shown>
 #		    - <color of text>
@@ -41,9 +41,117 @@
 
 # extra information can be as long as wanted
 commands:
+  broadcast:
+    admin:
+      header:
+        description: "&bAvailable commands"
+      help: 
+        usage: "&b/broadcast help"
+        description: "- Shows all available commands"
+      send: 
+        usage: "&b/broadcast send"
+        description: "- Send message to everyone online"
+      add:
+        usage: "&b/broadcast add <name> <interval (seconds)> <message>"
+        description: "- Add a message to be sent at specified interval"
+      edit:
+        usage: "&b/broadcast edit <name> <name/interval/message> <new value>"
+        description: "- Edit values of already existing broadcast"
+      remove:
+        usage: "&b/broadcast remove <name>"
+        description: "- Remove broadcast from list"
+      list:
+        usage: "&b/broadcast list"
+        description: "- Shows list of all broadcasts"
+      info:
+        usage: "&b/broadcast info <name>"
+        description: "- Displays all info about specified broadcast"
+  mod:
+    admin:
+      header:
+        description: "&bAvailable commands"
+      help:
+        usage: "&b/mod help"
+        description: "- Shows all available commands"
+      warn:
+        usage: "&b/mod warwn <player> <optional reason>"
+        description: "- Warn a player"
+      list:
+        usage: "&b/mod list <number>"
+        description: "- Show list of warned players"
+      info:
+        usage: "&b/mod info <warn num>"
+        description: "- Show info about specified warning"
+      mute:
+        usage: "&b/mod mute <player> <optional time (seconds)>"
+        description: "- Mute a player for a specified time"
+      unmute:
+        usage: "&b/mod unmute <player>"
+        description: "- Unmute a player"
+      timeout:
+        usage: "&b/mod timout <player> <optional time (seconds)>"
+        description: "- Prevent player from joining back for a specified time"
+      extra: 
+        line1: "&aExtra information"
+        line2: "&aMUTE, If no time is specified player is permanently muted"
+        line3: "&aTIMEOUT, If not time is specified player gets banned, unban with /pardon <player>"     
+  chat:
+    user:
+      header:
+        description: "&bAvailable commands"
+      help:
+        usage: "&b/chat help"
+        description: "- Shows all available commands"
+      mode:
+        usage: "&b/chat <mode>"
+        description: "- Change chat mode to specified mode"
+      modes:
+        usage: "&b/chat modes"
+        description: "- Shows all available chat modes"
+      create:
+        usage: "&b/chat create <group/party> <group name>"
+        description: "- Create a group or party"
+      invite:
+        usage: "&b/chat invite <player> <group/party>"
+        description: "- Invite specified player to group/party"
+      remove:
+        usage: "&b/chat remove <player> <group/party>"
+        description: "- Remove specified player from group/party"
+      leave:
+        usage: "&b/chat leave <group/party>"
+        description: "- Leave your current group/party"
+      disband:
+        usage: "&b/chat disband <group name>"
+        description: "- Disband your group"
+      role:
+        usage: "&b/chat role <player> <trusted/member>"
+        description: "- Change a players role in your group"
+      extra:
+        line1: "&aExtra information"
+        line2: "&aOnly groups can be named"
+        line3: "&aDisbanding kicks all players including yourself from the group"
+  title:
+    admin:
+      header:
+        description: "&bAvailable commands"
+      help:
+        usage: "&b/title help"
+        description: "- Shows all available commands"
+      award:
+        usage: "&b/title award <player> <title>"
+        description: "- Award a player with a title"
+      titles:
+        usage: "&b/title titles"
+        description: "- Show all available titles"
+      info:
+        usage: "&b/title info <title>"
+        description: "- Show what permissions title gives"
+      extra:
+        line1: "&aExtra information"
+        line2: "A player can only hold one title at once"
   emote:
     user:
-      info:
+      header:
         description: "&bAvailable commands"
       help: 
         usage: "&b/emote help"
@@ -66,10 +174,8 @@ commands:
       remove: 
         usage: "&b/emote remove <name>"
         description: "- Remove an emote"
-      extra: 
-        description: "&aNB! /e also works"
     admin:
-      info: 
+      header: 
         description: "&bAdmin commands"
       add: 
         usage: "&b/emote add <permission> <player>"
@@ -79,6 +185,6 @@ commands:
         description: "- Remove permission from player"
       perm_list: 
         usage: "&bemote permlist"
-        description: "- Give a player permissions"
+        description: "- Show all available permissions"
       extra: 
-        line1: "&aNB! Use the option 'all' to give every online player the specified permission"
+        line1: "&aNB! Use the option 'all' to give every online player the specified permission [NOT IN CURRENT VERSION]"

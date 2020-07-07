@@ -39,14 +39,12 @@ public class EmoteHandler {
     				player.sendMessage(ChatColor.BLUE + "" + ChatColor.BOLD + "Emote list (" + pageNum + "/" + pageLimit + ")");
     				
     				for (String key1 : main.emote.getConfig().getConfigurationSection("emotes").getKeys(false)) {
-    					if (key1.equalsIgnoreCase("amount")) {
+    					if (key1.equalsIgnoreCase("amount"))
     						continue;
-    					}
     					
-    					if (toSkip > 0) {
+    					if (toSkip > 0)
     						toSkip--;
-    					}
-    					
+
     					if (count >= 5)
     						break;
     					

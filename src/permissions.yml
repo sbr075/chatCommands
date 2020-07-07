@@ -6,10 +6,16 @@
 # ======================================================= #
 
 permissions:
+  default_user:
+    - emote.basic
+    - emote.use
+  default_admin:
+    - emote.admin
+    - broadcast.admin
+    - mod.admin
+    - chat.admin
+    - title.admin
   emote:
-    default:
-      - emote.basic
-      - emote.use
     names:
       - emote.basic
       - emote.admin
@@ -39,5 +45,17 @@ permissions:
       use:
         - emote.use
         - emote.admin
+  broadcast:
+    names:
+      - broadcast.admin
+  mod:
+    names:
+      - mod.admin
+  chat:
+    names:
+      - chat.admin
+  title:
+    names:
+      - chat.admin
   
 players:
