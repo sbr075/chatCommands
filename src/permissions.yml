@@ -17,5 +17,27 @@ permissions:
       - emote.edit
       - emote.remove
       - emote.use
+    commands:
+      help:
+        - emote.basic
+        - emote.admin
+      list:
+        - emote.basic
+        - emote.admin
+        - emote.use
+      permlist:
+        - emote.admin
+      add:
+        - emote.add
+        - emote.admin
+      edit:
+        - emote.edit
+        - emote.admin
+      remove:
+        - emote.remove
+        - emote.admin
+      use:
+        - emote.use
+        - emote.admin
   
 players:
