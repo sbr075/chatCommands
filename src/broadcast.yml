@@ -1,2 +1,4 @@
 broadcasts:
   min_delay: 100
+  max_broadcasts: 10
+  current_broadcasts: 0

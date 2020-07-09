@@ -212,7 +212,7 @@ public class EmoteHandler {
 
     			// Scan for exisitng name
     			if (!main.emote.getConfig().contains("emotes." + emoteName)) {
-    				player.sendMessage("Emote " + emoteName + " doesn't exists");
+    				player.sendMessage("Emote " + emoteName + " doesn't exist");
 					return;
     			}
     			

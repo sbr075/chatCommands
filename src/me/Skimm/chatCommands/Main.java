@@ -274,7 +274,6 @@ public class Main extends JavaPlugin implements Listener {
 	        		
 	        	case "broadcast":
 	        		broadcastCommands.commandHandler(player, label, argv);
-	        		player.sendMessage("This feature is not yet implemented");
 	        		break;
 	        	
 	        	case "mod":

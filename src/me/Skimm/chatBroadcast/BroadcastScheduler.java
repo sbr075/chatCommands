@@ -14,6 +14,8 @@ import me.Skimm.chatCommands.Main;
 
 public class BroadcastScheduler extends BukkitRunnable {
 	
+	SimpleDateFormat format = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+	Date currentTime, endTime = null;
     private final Main plugin;
     private String msg = "";
     private final String[] argv;
@@ -25,8 +27,46 @@ public class BroadcastScheduler extends BukkitRunnable {
         this.player = player;
     }
 
-    SimpleDateFormat format = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
-	Date currentTime, endTime = null;
+	public int convertFromTimeformat(Player player, String time, int conversionRate) {
+		int newTime;
+		try {
+			newTime = Integer.parseInt(time.substring(0, time.length() - 1));
+		}
+		catch (NumberFormatException e) {
+			player.sendMessage(ChatColor.RED + "Unknown time format: " + time);
+			return -1;
+		}
+		
+		switch(time.substring(time.length() - 1)) {
+		case "s":
+			newTime *= conversionRate;
+			break;
+		case "m":
+			newTime *= 60 * conversionRate;
+			break;
+		case "h":
+			newTime *= 60 * 60 * conversionRate;
+			break;
+		default:
+			player.sendMessage(ChatColor.RED + "Unknown time format: " + argv[2]);
+			return -1;
+		}
+		
+		return newTime;
+	}
+	
+	public void removeListing(String name) {
+		if (!plugin.broadcast.getConfig().contains("broadcasts." + name)) {
+			player.sendMessage("Broadcast '" + name + "' doesn't exist");
+			return;
+		}
+		
+		ConfigurationSection editListing = plugin.broadcast.getConfig().getConfigurationSection("broadcasts");
+		editListing.set("current_broadcasts", editListing.getInt("current_broadcasts") - 1);
+		
+		plugin.broadcast.getConfig().set("broadcasts." + name, null);
+		plugin.broadcast.saveConfig();
+	}
 	
 	@Override
 	public void run() {
@@ -40,35 +80,10 @@ public class BroadcastScheduler extends BukkitRunnable {
 				msg += argv[i] + " ";
 
 			// Fetch duration (in ticks)
-			switch(argv[3]) {
-			case "false":
-				duration = -1;
-			default:
-				try {
-					duration = Integer.parseInt(argv[3].substring(0, argv[3].length() - 1));
-				}
-				catch (NumberFormatException e) {
-					player.sendMessage(ChatColor.RED + "Unknown time format: " + argv[3]);
-					this.cancel();
-					break;
-				}
-
-				switch(argv[3].substring(argv[3].length() - 1)) {
-				case "s":
-					duration *= 1000;
-					break;
-				case "m":
-					duration *= 60 * 1000;
-					break;
-				case "h":
-					duration *= 60 * 60 * 1000;
-					break;
-				default:
-					player.sendMessage(ChatColor.RED + "Unknown time format: " + argv[3]);
-					this.cancel();
-					break;
-				}
-				break;
+			duration = convertFromTimeformat(player, argv[3], 1000);
+			if (duration == -1) {
+				this.cancel();
+				return;
 			}
 
 			// Set values in file
@@ -77,15 +92,12 @@ public class BroadcastScheduler extends BukkitRunnable {
 			newBroadcast.set("creator.uuid", player.getUniqueId().toString());
 			newBroadcast.set("msg", msg);
 			newBroadcast.set("start_time", format.format(currentTime));
-			
-			if (duration > 0) {
-				endTime = new Date(currentTime.getTime() + duration);
-				newBroadcast.set("end_time", format.format(endTime));
-			}
-			else {
-				newBroadcast.set("end_time", format.format("-1"));
-			}
 
+			endTime = new Date(currentTime.getTime() + duration);
+			newBroadcast.set("end_time", format.format(endTime));
+
+			ConfigurationSection editAmount = plugin.broadcast.getConfig().getConfigurationSection("broadcasts");
+			editAmount.set("current_broadcasts", editAmount.getInt("current_broadcasts") + 1);
 			plugin.broadcast.saveConfig();
 			
 			player.sendMessage("Created broadcast '" + argv[1] + "'");
@@ -102,11 +114,12 @@ public class BroadcastScheduler extends BukkitRunnable {
 
 		if (currentTime.after(endTime)) {
 			player.sendMessage("name: " + argv[1] + ", broadcast ended at: " + format.format(currentTime));
-			// Need to remove from list before cancel
+			removeListing(argv[1]);
 			this.cancel();
+			return;
 		}
 
 		msg = plugin.broadcast.getConfig().getString("broadcasts." + argv[1] + ".msg");
-		Bukkit.getServer().broadcastMessage(msg);
+		Bukkit.getServer().broadcastMessage(ChatColor.RED + "[BROADCAST] " + ChatColor.WHITE + msg);
 	}
 }

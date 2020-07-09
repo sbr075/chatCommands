@@ -57,7 +57,7 @@ commands:
         usage: "&b/broadcast add <name> <interval (s, m or h)> <runtime (s, m or h)> <message>"
         description: "- Add a message to be sent at specified interval"
       edit:
-        usage: "&b/broadcast edit <name> <name/interval/message> <new value>"
+        usage: "&b/broadcaste edit <name> <add runtime/message> <new value>"
         description: "- Edit values of already existing broadcast"
       remove:
         usage: "&b/broadcast remove <name>"
@@ -70,7 +70,6 @@ commands:
         description: "- Displays all info about specified broadcast"
       extra:
         line1: "&aBoth interval and runtime can be specified with seconds, minutes or hours, i.e. 10s"
-        line2: "&aSetting runtime to false will make it run forever until removed"
   mod:
     admin:
       header:
