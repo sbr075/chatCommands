@@ -1,6 +1,10 @@
 package me.Skimm.chatCommands;
 
 import me.Skimm.chatEmotes.*;
+import me.Skimm.chatMod.ModHandler;
+import me.Skimm.chatTitles.TitleHandler;
+import me.Skimm.chatBroadcast.*;
+import me.Skimm.chatChat.ChatHandler;
 
 import java.util.List;
 
@@ -95,16 +99,26 @@ public class Main extends JavaPlugin implements Listener {
 	public ConfigManager emote;
 	public ConfigManager permissions;
 	public ConfigManager commands;
+	public ConfigManager broadcast;
 
 	private EmoteHandler emoteCommands;
+	private BroadcastHandler broadcastCommands;
+	private ChatHandler chatCommands;
+	private ModHandler modCommands;
+	private TitleHandler titleCommands;
 
     @Override
     public void onEnable() {
     	this.emote = new ConfigManager(this, "emotes.yml");
     	this.permissions = new ConfigManager(this, "permissions.yml");
     	this.commands = new ConfigManager(this, "commands.yml");
+    	this.broadcast = new ConfigManager(this, "broadcast.yml");
     	
     	this.emoteCommands = new EmoteHandler(this);
+    	this.broadcastCommands = new BroadcastHandler(this);
+    	this.chatCommands = new ChatHandler(this);
+    	this.modCommands = new ModHandler(this);
+    	this.titleCommands = new TitleHandler(this);
     	
     	getServer().getPluginManager().registerEvents(this, this);
         // Used during startup and reloads
@@ -121,7 +135,7 @@ public class Main extends JavaPlugin implements Listener {
     	
     	// If player doesn't exist in registered players
     	if (permissions.getConfig().getConfigurationSection("players." + player.getUniqueId()) == null) {
-    		// Set default perms
+    		// Set default permissions
     		ConfigurationSection newPlayer = permissions.getConfig().createSection("players." + player.getUniqueId().toString());
     		List<String> defaultPerms = permissions.getConfig().getStringList("permissions.default_user");
     		for (String key : defaultPerms) {
@@ -134,9 +148,12 @@ public class Main extends JavaPlugin implements Listener {
     				newPlayer.set("perms." + key, key);
     			}
     		}
+    		
+    		// Set up cooldown section
+    		newPlayer.set("cooldown", "0");
 
     		// Notify player
-    		player.sendMessage("Your permissions has been set!");
+    		player.sendMessage("Player data has been created!");
     		permissions.saveConfig();
     	}
     	else {
@@ -256,18 +273,22 @@ public class Main extends JavaPlugin implements Listener {
 	        		break;
 	        		
 	        	case "broadcast":
+	        		broadcastCommands.commandHandler(player, label, argv);
 	        		player.sendMessage("This feature is not yet implemented");
 	        		break;
 	        	
 	        	case "mod":
+	        		modCommands.commandHandler(player, label, argv);
 	        		player.sendMessage("This feature is not yet implemented");
 	        		break;
 	        	
 	        	case "chat":
+	        		chatCommands.commandHandler(player, label, argv);
 	        		player.sendMessage("This feature is not yet implemented");
 	        		break;
 	        	
 	        	case "title":
+	        		titleCommands.commandHandler(player, label, argv);
 	        		player.sendMessage("This feature is not yet implemented");
 	        		break;
 	        	
