@@ -12,7 +12,7 @@ If you got any complaints or tips feel free to let me know.
  1. Cooldown on commands
     - Helpful way for server administrators to prevent players from abusing commands
  2. Broadcast
-    - Allows server administrators, or players with the right permissions, to broadcast a message to the whole     server. This can be done once or set to a timed interval
+    - Allows server administrators, or players with the right permissions, to broadcast a message to the whole server. This can be done once or set to a timed interval
  3. Moderator utilities
     - Allows server administrators more control of the server.
       1. Warns / warn logs
@@ -32,6 +32,46 @@ If you got any complaints or tips feel free to let me know.
  ### NB! Not all features are 100% guaranteed to make it in. I am working on this as a hobby but will try to include them all and more!
 
 ## Changelog
+### Version 0.4.0
+- Update 0.4.0 brings with it a new set of functions accessible with the /broadcast. It allows administrators, or players with the correct permissions, to send a broadcast to the whole server either once or at a timed interval for a set duration of time.
+  - New commands
+    1. Send
+       - **COMMAND**: /broadcast send <message>
+         - Broadcasts a message once to the whole server. 
+         - I.e. */broadcast send this is a message*
+    2. Add
+       - **COMMAND**: /broadcast add <name> <interval (s, m or h)> <duration (s, m or h)> <message>
+       - Broadcasts a message to the whole server at a set interval for the duration given. 
+       - I.e. */broadcast add test 10s 100s this is a message*
+    3. Edit
+       - **COMMAND**: /broadcast edit <name> <add runtime/message> <new value>
+         - Add runtime
+           - This can either be negative (remove runtime) or positve (add more runtime)
+         - Message
+           Changes the broadcast message
+         - I.e */broadcast edit test add runtime -10s*
+            - **NB!** If you remove more time than duration given it will remove the broadcast entirely
+    4. Remove
+       - **COMMAND**: /broadcast remove <name>
+       - Removes a running broadcast
+       - I.e. */broadcast remove test*
+    5. List
+       - **COMMAND**: /broadcast list
+       - Lists all running broadcasts
+    6. Info
+       - **COMMAND**: /broadcast info <name>
+       - Shows information about a specifc running broadcast
+       - I.e. */broadcast info test*
+ - Server administrator information
+   - You can configure how many total broadcasts are allowed at once and the minimum delay interval in the broadcast.yml file. 
+   - **NB!** Do not touch the "current_broadcasts" tab since it's used to keep track of how many broadcasts are currently running
+ 
+ - Extra information
+   - Anything you see here is subject to change since this is an early version of this system. Most likely the functions will remain the same but the code will be cleaned up or optimized for better performance.
+
+#### Planned changes
+- Before I start on the adding the next feature to this plugin I will spend time on cleaing up the code. I'm also planning on adding a better interface, and/or command execution, to make it easier for the user to use these commands.
+       
 ### Version 0.4.0-alpha
 - Updated commands.yml to include new planned commands
 - Updated sectioning and sorted code
