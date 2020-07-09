@@ -23,7 +23,6 @@ public class EmoteHandler {
 		String command = argv[0].toLowerCase();
 		
 		switch (command) {
-    	// Special functions
     	case "list":
     		if (argv.length == 2) {
     			int numEmotes, pageLimit, pageNum;
@@ -65,7 +64,7 @@ public class EmoteHandler {
     			}
     			
     			else {
-    				player.sendMessage("Invalid use of function, enter a number between 1 - " + pageLimit);
+    				player.sendMessage(ChatColor.RED + "Invalid use of function, enter a number between 1 - " + pageLimit);
     			}
     		}
     		else {
@@ -74,11 +73,10 @@ public class EmoteHandler {
         	break;
 
     	case "add":
-    		if (argv.length == 2) {
-    			// /emote add <name>
+    		if (argv.length == 2) { // /emote add <name>
     			String emoteName = argv[1];
 
-    			// Scan for exisitng name
+    			// Scan for existing name
     			if (main.emote.getConfig().contains("emotes." + emoteName)) {
     				player.sendMessage("Emote " + emoteName + " already exists");
 					return;
@@ -115,18 +113,22 @@ public class EmoteHandler {
     			newEmote.set("multiple.far.broadcast", "<BLANK>");
     			newEmote.set("multiple.far.receiver", "<BLANK>");
     			
+    			player.sendMessage(ChatColor.GREEN + "Successfully" + ChatColor.WHITE + " created emote '" + emoteName + "'");
+    			
     			main.emote.saveConfig();
     		}
-    		else if (argv.length == 3) {
-    			// /emote add <permission> <player>
+    		else if (argv.length == 3) { // /emote add <permission> <player>
     			if (main.checkSpecificPermission(player, "emote.admin")) {
+    				// Get list of all permissions
     				List<String> allPerms = main.permissions.getConfig().getStringList("permissions." + label + ".names");
     				
+    				// Check if permission exists
     				if (!(allPerms.contains(argv[1]))) {
     					player.sendMessage("This permission does not exist, check permission list to see available ones");
     					return;
     				}
     				
+    				// Find player
     				try {
     	    			player.getServer().getPlayer(argv[2]);
     	    		}
@@ -134,6 +136,7 @@ public class EmoteHandler {
     	    			player.sendMessage("Can't find player '" + argv[2] + "'");
     	    		}
 
+    				// Update player permission listing
     				ConfigurationSection newPerm = main.permissions.getConfig().getConfigurationSection("players." + player.getUniqueId().toString() + ".perms.emote");
     				String[] tokens = argv[1].split("\\.");
     				newPerm.set(tokens[1], argv[1]);
@@ -166,27 +169,28 @@ public class EmoteHandler {
     				player.sendMessage(ChatColor.RED + "Invalid use of command. Type /emote help for more information");
     			}
     		}
-    		else if (argv.length >= 4 || argv.length <= 20) {
-    			// /emote edit <name> <option> <new value>
+    		else if (argv.length >= 4 || argv.length <= 20) { // /emote edit <name> <option> <new value>
     			String emoteName = argv[1];
     			String option = argv[2].toLowerCase();
     			String newdesc = "";
     			
-    			for (int j = 3; j < argv.length; j++) {
-    				newdesc += argv[j];
-    				newdesc += " ";
-    			}
-
-    			// Scan for exisitng name
+    			// Check if name exists
     			if (!(main.emote.getConfig().contains("emotes." + emoteName))) {
     				player.sendMessage("Emote " + emoteName + " doesn't exist");
 					return;
     			}
     			
+    			// Check if option exists
     			if (!(main.emote.getConfig().contains("emote_commands.options." + option)) || option.equalsIgnoreCase("info")) {
     				player.sendMessage("Option " + option + " doesn't exist");
     				return;
     			}
+    			
+    			// Fetch new value
+    			for (int j = 3; j < argv.length; j++) {
+    				newdesc += argv[j];
+    				newdesc += " ";
+    			}    			
     			
     			// Setup new emote slot
     			ConfigurationSection editEmote = main.emote.getConfig().getConfigurationSection("emotes." + emoteName);
@@ -206,8 +210,7 @@ public class EmoteHandler {
     		break;
     	
     	case "remove":
-    		if (argv.length == 2) {
-    			// /emote remove <name>
+    		if (argv.length == 2) { // /emote remove <name>
     			String emoteName = argv[1];
 
     			// Scan for exisitng name
@@ -221,19 +224,21 @@ public class EmoteHandler {
     			amount = main.emote.getConfig().getInt("emotes.amount");
     			main.emote.getConfig().set("emotes.amount", (amount - 1));
     			
+    			// Remove emote and save
     			main.emote.getConfig().set("emotes." + emoteName, null);
-    			
     			main.emote.saveConfig();
     		}
     		else if (argv.length == 3) {
     			if (main.checkSpecificPermission(player, "emote.admin")) {
     				List<String> allPerms = main.permissions.getConfig().getStringList("permissions." + label + ".names");
     				
+    				// Check if permission exists
     				if (!(allPerms.contains(argv[1]))) {
     					player.sendMessage("This permission does not exist, check permission list to see available ones");
     					return;
     				}
     				
+    				// Get player
     				try {
     	    			player.getServer().getPlayer(argv[2]);
     	    		}
@@ -241,6 +246,7 @@ public class EmoteHandler {
     	    			player.sendMessage("Can't find player '" + argv[2] + "'");
     	    		}
 
+    				// Update listing and save
     				ConfigurationSection newPerm = main.permissions.getConfig().getConfigurationSection("players." + player.getUniqueId().toString() + ".perms.emote");
     				String[] tokens = argv[1].split("\\.");
     				newPerm.set(tokens[1], null);
@@ -261,6 +267,7 @@ public class EmoteHandler {
         		ArrayList<String> emoteMultipleInfo = new ArrayList<String>();
         		ArrayList<ArrayList<String>> emoteAllInfo = new ArrayList<ArrayList<String>>();
 
+        		// Fetches all emote information
         		for (String key1 : main.emote.getConfig().getConfigurationSection("emotes").getKeys(false)) {
         			if (!key1.equalsIgnoreCase(emoteName)) {
 						continue;
@@ -299,10 +306,12 @@ public class EmoteHandler {
 						}
 					}
         		}
+        		// Save it all to list of lists
         		emoteAllInfo.add(emoteGenInfo);
         		emoteAllInfo.add(emoteSingleInfo);
         		emoteAllInfo.add(emoteMultipleInfo);
         		
+        		// Parse message
         		msg.msgParser(player, argv, emoteAllInfo);
     		}
     		else {

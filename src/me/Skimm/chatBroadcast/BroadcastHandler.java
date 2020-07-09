@@ -16,6 +16,10 @@ public class BroadcastHandler {
 	private Main main;
 	private BroadcastScheduler broadcastScheduler;
 	
+	SimpleDateFormat format = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+	Date newTime = null, endTime = null;
+	String msg = "";
+	
 	public BroadcastHandler(Main plugin) {
 		this.main = plugin;
 	}
@@ -30,7 +34,6 @@ public class BroadcastHandler {
 		case "send":
 			// /broadcast send <message>
 			if (argv.length >= 2) {
-				String msg = "";
 				for (int i = 1; i < argv.length; i++)
 					msg += argv[i] + " ";
 
@@ -41,12 +44,12 @@ public class BroadcastHandler {
     		}
 			break;
 			
-		case "add":
+		case "add": // /broadcast add <name> <interval> <runtime> <message>
 			if (main.broadcast.getConfig().getInt("broadcasts.current_broadcasts") >= main.broadcast.getConfig().getInt("broadcasts.max_broadcasts")) {
-				player.sendMessage("[LIMIT REACHED] Can't add more broadcasts, try removing some");
+				player.sendMessage(ChatColor.RED + "[LIMIT REACHED]" + ChatColor.WHITE + " Can't add more broadcasts, try removing some existing broadcasts");
 				break;
 			}
-			// /broadcast add <name> <interval> <runtime> <message>
+			
 			/*
 			 * Conversation would be good to have
 			 * Question 1. State the name of the broadcast (this is not the message itself): 
@@ -56,11 +59,13 @@ public class BroadcastHandler {
 			 * Question 4. Type in the message you would like broadcasted: 
 			 */
 			if (argv.length >= 4) {
+				// Check if broadcast already exists
 				if (main.broadcast.getConfig().contains("broadcasts." + argv[1])) {
 					player.sendMessage("Broadcast '" + argv[1] + "' already exists!");
 					return;
 				}
 				
+				// Calculate specified delay and check it against minimum delay allowed
 				int set_delay, min_delay = main.broadcast.getConfig().getInt("broadcasts.min_delay");
 				set_delay = broadcastScheduler.convertFromTimeformat(player, argv[2], 20);
 				
@@ -69,6 +74,8 @@ public class BroadcastHandler {
 					return;
 				}
 
+				// Create task
+				@SuppressWarnings("unused")
 				BukkitTask task = broadcastScheduler.runTaskTimer(this.main, 0, set_delay);
 			}
 			else {
@@ -76,38 +83,40 @@ public class BroadcastHandler {
     		}
 			break;
 			
-		case "edit":
-			// /broadcast edit <name> <add runtime/message> <new value>
+		case "edit": // /broadcast edit <name> <add runtime/message> <new value>
 			if (argv.length >= 4) {
-				if (!(argv[2].equalsIgnoreCase("message"))) {
+				// Check if correct argument used
+				if (!(argv[2].toLowerCase().equalsIgnoreCase("message"))) {
 					player.sendMessage(ChatColor.RED + "Invalid use of command. Type /broadcast help for more information");
 					break;
 				}
 				
+				// Check if exists
 				if (!main.broadcast.getConfig().contains("broadcasts." + argv[1])) {
 					player.sendMessage("Broadcast '" + argv[1] + "' doesn't exist");
 					break;
 				}
 				
+				// Save message
 				String msg = "";
 				for (int i = 3; i < argv.length; i++) {
 					msg += argv[i] + " ";
 				}
 				
+				// Update listing
 				ConfigurationSection updateBroadcast = main.broadcast.getConfig().getConfigurationSection("broadcasts." + argv[1]);
 				updateBroadcast.set("msg", msg);
 				main.broadcast.saveConfig();
 			}
 			
 			else if (argv.length == 5) {
-				if (!(argv[2].equalsIgnoreCase("add")) && !(argv[3].equalsIgnoreCase("runtime"))) {
+				// Check if correct arguments used
+				if (!(argv[2].toLowerCase().equalsIgnoreCase("add")) && !(argv[3].toLowerCase().equalsIgnoreCase("runtime"))) {
 					player.sendMessage(ChatColor.RED + "Invalid use of command. Type /broadcast help for more information");
 					break;
 				}
 				
-				SimpleDateFormat format = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
-				Date newTime, endTime = null;
-				
+				// Check if listing exists
 				if (!main.broadcast.getConfig().contains("broadcasts." + argv[1])) {
 					player.sendMessage("Broadcast '" + argv[1] + "' doesn't exist");
 					break;
@@ -127,7 +136,7 @@ public class BroadcastHandler {
 					e.printStackTrace();
 				}
 				
-				// Allows for removal of time
+				// Makes sure newTime can't be negative
 				if ((endTime.getTime() + duration) <= 0) {
 					newTime = new Date();
 				}
@@ -135,7 +144,7 @@ public class BroadcastHandler {
 					newTime = new Date(endTime.getTime() + duration);
 				}
 				
-				// Update time
+				// Update listing
 				ConfigurationSection updateBroadcast = main.broadcast.getConfig().getConfigurationSection("broadcasts." + argv[1]);
 				updateBroadcast.set("end_time", format.format(newTime));
 				main.broadcast.saveConfig();
@@ -145,7 +154,7 @@ public class BroadcastHandler {
     		}
 			break;
 			
-		case "remove":
+		case "remove": // /broadcast remove <name>
 			if (argv.length == 2) {
 				broadcastScheduler.removeListing(argv[1]);
 			}
@@ -156,12 +165,12 @@ public class BroadcastHandler {
 			
 		case "list":
 			if (argv.length == 1) {
-				player.sendMessage(ChatColor.DARK_GREEN + "Broadcast list");
+				player.sendMessage(ChatColor.DARK_AQUA + "Broadcast list");
 				for (String key1 : main.broadcast.getConfig().getConfigurationSection("broadcasts").getKeys(false)) {
 					if (key1.equalsIgnoreCase("min_delay") || key1.equalsIgnoreCase("max_broadcasts") || key1.equalsIgnoreCase("current_broadcasts"))
 						continue;
 
-					player.sendMessage(ChatColor.GREEN + "- " + key1);
+					player.sendMessage(ChatColor.AQUA + "- " + key1);
 				}
 			}
 			else {
@@ -171,19 +180,18 @@ public class BroadcastHandler {
 			
 		case "info":
 			if (argv.length == 2) {
+				// Check if listing exists
 				if (!main.broadcast.getConfig().contains("broadcasts." + argv[1])) {
 					player.sendMessage("Broadcast '" + argv[1] + "' doesn't exist");
 					return;
 				}
 				
 				ConfigurationSection info = main.broadcast.getConfig().getConfigurationSection("broadcasts." + argv[1]);
-				
-				SimpleDateFormat format = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
-				Date startTime = null, endTime = null;
 				String creator, msg;
 				
+				// Fetch information
 				try {
-					startTime = format.parse(info.getString("start_time"));
+					newTime = format.parse(info.getString("start_time"));
 					endTime = format.parse(info.getString("end_time"));
 				} catch (ParseException e) {
 					e.printStackTrace();
@@ -193,10 +201,11 @@ public class BroadcastHandler {
 				msg = info.getString("msg");
 				creator = info.getString("creator.display_name");
 				
+				// Send information to player
 				player.sendMessage(ChatColor.DARK_GREEN + "Broadcast '" + argv[1] + "' information:");
 				player.sendMessage(ChatColor.GREEN + "Creator: " + ChatColor.WHITE + creator);
 				player.sendMessage(ChatColor.GREEN + "Message: " + ChatColor.WHITE + msg);
-				player.sendMessage(ChatColor.GREEN + "Start time: " + ChatColor.WHITE + format.format(startTime));
+				player.sendMessage(ChatColor.GREEN + "Start time: " + ChatColor.WHITE + format.format(newTime));
 				player.sendMessage(ChatColor.GREEN + "End time: " + ChatColor.WHITE + format.format(endTime));
 			}
 			else {
@@ -205,7 +214,7 @@ public class BroadcastHandler {
 			break;
 			
 		default:
-			player.sendMessage(ChatColor.RED + "Invalid use of command. Type /emote help for more information");
+			player.sendMessage(ChatColor.RED + "Invalid use of command. Type /broadcast help for more information");
 			break;
 		}
 	}

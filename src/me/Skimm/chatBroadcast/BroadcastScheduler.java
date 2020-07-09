@@ -27,8 +27,10 @@ public class BroadcastScheduler extends BukkitRunnable {
         this.player = player;
     }
 
+    // Converts time specified by player into given conversion rate
 	public int convertFromTimeformat(Player player, String time, int conversionRate) {
 		int newTime;
+		// Check if integer given
 		try {
 			newTime = Integer.parseInt(time.substring(0, time.length() - 1));
 		}
@@ -37,14 +39,15 @@ public class BroadcastScheduler extends BukkitRunnable {
 			return -1;
 		}
 		
+		// Convert depending on format
 		switch(time.substring(time.length() - 1)) {
-		case "s":
+		case "s": // Seconds
 			newTime *= conversionRate;
 			break;
-		case "m":
+		case "m": // Minutes
 			newTime *= 60 * conversionRate;
 			break;
-		case "h":
+		case "h": // Hours
 			newTime *= 60 * 60 * conversionRate;
 			break;
 		default:
@@ -55,12 +58,15 @@ public class BroadcastScheduler extends BukkitRunnable {
 		return newTime;
 	}
 	
+	// Remove broadcast listing from list
 	public void removeListing(String name) {
+		// Check if broadcast exists
 		if (!plugin.broadcast.getConfig().contains("broadcasts." + name)) {
-			player.sendMessage("Broadcast '" + name + "' doesn't exist");
+			player.sendMessage(ChatColor.RED + "Broadcast '" + name + "' doesn't exist");
 			return;
 		}
 		
+		// Update broadcast amount, set listing to null and save
 		ConfigurationSection editListing = plugin.broadcast.getConfig().getConfigurationSection("broadcasts");
 		editListing.set("current_broadcasts", editListing.getInt("current_broadcasts") - 1);
 		
@@ -100,18 +106,23 @@ public class BroadcastScheduler extends BukkitRunnable {
 			editAmount.set("current_broadcasts", editAmount.getInt("current_broadcasts") + 1);
 			plugin.broadcast.saveConfig();
 			
-			player.sendMessage("Created broadcast '" + argv[1] + "'");
+			player.sendMessage(ChatColor.GREEN + "Successfully" + ChatColor.WHITE + " created broadcast");
+			player.sendMessage("Name: " + argv[1]);
 			player.sendMessage("Start time: " + format.format(currentTime));
 			player.sendMessage("End time: " + format.format(endTime));
 		}
 		
+		// Get current time
 		currentTime = new Date();
+		
+		// Get end time specified on listing
 		try {
 			endTime = format.parse(plugin.broadcast.getConfig().getString("broadcasts." + argv[1] + ".end_time"));
 		} catch (ParseException e) {
 			e.printStackTrace();
 		}
 
+		// Check if current is after end
 		if (currentTime.after(endTime)) {
 			player.sendMessage("name: " + argv[1] + ", broadcast ended at: " + format.format(currentTime));
 			removeListing(argv[1]);
@@ -119,6 +130,7 @@ public class BroadcastScheduler extends BukkitRunnable {
 			return;
 		}
 
+		// Broadcast message
 		msg = plugin.broadcast.getConfig().getString("broadcasts." + argv[1] + ".msg");
 		Bukkit.getServer().broadcastMessage(ChatColor.RED + "[BROADCAST] " + ChatColor.WHITE + msg);
 	}

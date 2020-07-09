@@ -8,6 +8,7 @@ import org.bukkit.entity.Player;
 
 public class MessageHandler {	
 
+	// Sends message out
 	private void msgSend(Player sender, String msg, String[] argv, int msgType) {
     	Player receiver = null;
     	if (argv.length >= 3) {
@@ -34,21 +35,24 @@ public class MessageHandler {
 		}
     }
     
+	// Parses through all emote information
     public void msgParser(Player sender, String[] argv, ArrayList<ArrayList<String>> emoteAllInfo) {
     	int maxDistance, snumArgs, mnumArgs;
     	maxDistance = Integer.parseInt(emoteAllInfo.get(0).get(0));
     	snumArgs = Integer.parseInt(emoteAllInfo.get(1).get(0));
     	mnumArgs = Integer.parseInt(emoteAllInfo.get(2).get(0));
 
+    	// For all lists
     	for (int i = 1; i < emoteAllInfo.size(); i++) {
     		if ((argv.length - 1 ) < Integer.parseInt(emoteAllInfo.get(i).get(0)))
     			continue;
 
+    		// For each information element in that list
     		for (int j = 1; j < emoteAllInfo.get(i).size(); j++) {
+    			// Skips empty cases
     			if (emoteAllInfo.get(i).get(j).equalsIgnoreCase("<BLANK>"))
     				continue;
     			
-    			// Skips empty cases
     			switch(i) {
     			case 1:
     				if (snumArgs <= 0 || (argv.length - 1) != snumArgs)
@@ -59,7 +63,8 @@ public class MessageHandler {
     					continue;
     				break;
     			}
-
+    			
+    			// Get receiver
     			Player receiver = null;
     	    	if (argv.length >= 3) {
     	    		try {
@@ -70,6 +75,7 @@ public class MessageHandler {
     	    		}
     	    	}
         		
+    	    	// Split up and parse message for keywords
     			String msg = "";
         		String[] tokens = emoteAllInfo.get(i).get(j).split(" ");
 
@@ -118,7 +124,7 @@ public class MessageHandler {
 
             	// sCount and rCount is 0
             	switch(thSplit.size()) {
-            	case 0:
+            	case 0: // No r or s
             		msg = ChatColor.translateAlternateColorCodes('&', emoteAllInfo.get(i).get(j));
             		break;
             	
@@ -126,21 +132,21 @@ public class MessageHandler {
             	case 2:
             		if (thSplit.get(0).equalsIgnoreCase("")) { // start
             			switch(sCount) {
-            			case 0: // r
+            			case 0: // Only r
             				msg = ChatColor.translateAlternateColorCodes('&', receiver.getDisplayName() + " " + thSplit.get(1));
             				break;
             				
-            			case 1: // s
+            			case 1: // only s
             				msg = ChatColor.translateAlternateColorCodes('&', sender.getDisplayName() + " " + thSplit.get(1));
             				break;
             			}
             		}
             		else if (thSplit.get(1).equalsIgnoreCase("")) { // end
             			switch(sCount) {
-            			case 0:
+            			case 0: // only r
             				msg = ChatColor.translateAlternateColorCodes('&', thSplit.get(0) + "&f" + receiver.getDisplayName());
             				break;
-            			case 1:
+            			case 1: // only s
             				msg = ChatColor.translateAlternateColorCodes('&', thSplit.get(0) + "&f" + sender.getDisplayName());
             				break;
             			}

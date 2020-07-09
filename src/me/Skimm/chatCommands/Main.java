@@ -27,18 +27,18 @@ import org.bukkit.plugin.java.JavaPlugin;
 /*
  * Planned features
  * 1. Cooldown on commands
- * 2. Broadcast
+ * 
+ * 2. Broadcast - IMPLEMENTED
  *    1. One time
  *       1. Send (msg)
  *    2. Interval
- *       1. Add (name, msg, interval)
+ *       1. Add (name, msg, interval, duration)
  *       2. Remove (name)
- *       3. Edit (name, msg or interval)
+ *       3. Edit (duration or msg)
  *    3. Sound (?)
  *    4. Broadcast info
  *       1. Name
  *       2. Message
- *       3. Interval
  *       4. Who made iet
  *    5. List of all broadcasts
  *       
@@ -96,11 +96,13 @@ import org.bukkit.plugin.java.JavaPlugin;
  */
 
 public class Main extends JavaPlugin implements Listener {
+	// All config files
 	public ConfigManager emote;
 	public ConfigManager permissions;
 	public ConfigManager commands;
 	public ConfigManager broadcast;
-
+	
+	// All feature packages
 	private EmoteHandler emoteCommands;
 	private BroadcastHandler broadcastCommands;
 	private ChatHandler chatCommands;
@@ -109,11 +111,13 @@ public class Main extends JavaPlugin implements Listener {
 
     @Override
     public void onEnable() {
+    	// Initialize config files
     	this.emote = new ConfigManager(this, "emotes.yml");
     	this.permissions = new ConfigManager(this, "permissions.yml");
     	this.commands = new ConfigManager(this, "commands.yml");
     	this.broadcast = new ConfigManager(this, "broadcast.yml");
     	
+    	// Initialize packages
     	this.emoteCommands = new EmoteHandler(this);
     	this.broadcastCommands = new BroadcastHandler(this);
     	this.chatCommands = new ChatHandler(this);
@@ -121,7 +125,6 @@ public class Main extends JavaPlugin implements Listener {
     	this.titleCommands = new TitleHandler(this);
     	
     	getServer().getPluginManager().registerEvents(this, this);
-        // Used during startup and reloads
     }
 
     @Override
@@ -142,6 +145,7 @@ public class Main extends JavaPlugin implements Listener {
     			newPlayer.set("perms." + key, key);
     		}
     		
+    		// If player is op, assign admin permissions
     		if (player.isOp()) {
     			List<String> defaultAdmin = permissions.getConfig().getStringList("permissions.default_admin");
     			for (String key : defaultAdmin) {
@@ -174,7 +178,6 @@ public class Main extends JavaPlugin implements Listener {
     	// Check users permissions
     	List<String> reqPerms = permissions.getConfig().getStringList("permissions." + label + ".commands." + command);
     	for (String perm : reqPerms) {
-    		//player.sendMessage("Checking " + perm + " in players." + player.getUniqueId() + ".perms." + label);
     		if (permissions.getConfig().getConfigurationSection("players." + player.getUniqueId() + ".perms." + label).contains(perm.split("\\.")[1]))
     			return true;
     	}
@@ -204,12 +207,8 @@ public class Main extends JavaPlugin implements Listener {
         	sender.sendMessage("Invalid use of command");
         	return true;
         }
-
-    	/*
-    	 * Supported command list
-    	 * /emote
-    	 */
-    	
+        
+        // Check if player
     	if (sender instanceof Player) {
     		// Cast sender to player
     		Player player = (Player) sender;
@@ -298,7 +297,7 @@ public class Main extends JavaPlugin implements Listener {
     		}
     	}
     	else {
-        	sender.sendMessage("Console can't use these commands!");
+        	sender.sendMessage(ChatColor.RED + "[ERROR] " + "Console can't use these commands!");
             return true;
             // Console
         }
