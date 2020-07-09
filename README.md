@@ -36,6 +36,7 @@ If you got any complaints or tips feel free to let me know.
 - Updated commands.yml to include new planned commands
 - Updated sectioning and sorted code
 - Updated "help" function
+- Added async task scheduling to broadcast so several can run at a time
 ### Version 0.3.6-alpha
 - Started work on organization before adding/refining features
   #### Known issues
