@@ -11,7 +11,7 @@ If you got any complaints or tips feel free to let me know.
 ## Planned features
  1. Cooldown on commands
     - Helpful way for server administrators to prevent players from abusing commands
- 2. Broadcast
+ 2. Broadcast - **Implemented**
     - Allows server administrators, or players with the right permissions, to broadcast a message to the whole server. This can be done once or set to a timed interval
  3. Moderator utilities
     - Allows server administrators more control of the server.
