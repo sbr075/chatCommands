@@ -33,7 +33,7 @@ If you got any complaints or tips feel free to let me know.
 
 ## Changelog
 ### Version 0.4.0
-- Update 0.4.0 brings with it a new set of functions accessible with the /broadcast. It allows administrators, or players with the correct permissions, to send a broadcast to the whole server either once or at a timed interval for a set duration of time.
+- Update 0.4.0 brings with it a new set of functions accessible with /broadcast. It allows administrators, or players with the correct permissions, to send a broadcast to the whole server either once or at a timed interval for a set duration of time.
   - New commands
     1. Send
        - **COMMAND**: /broadcast send <message>
@@ -67,7 +67,7 @@ If you got any complaints or tips feel free to let me know.
    - **NB!** Do not touch the "current_broadcasts" tab since it's used to keep track of how many broadcasts are currently running
  
  - Extra information
-   - Anything you see here is subject to change since this is an early version of this system. Most likely the functions will remain the same but the code will be cleaned up or optimized for better performance.
+   - Anything you see here is subject to change since this is an early version of this system. The functionlity of the implemented functions will remain the same but the code will be cleaned up or optimized for better performance.
    - There are 100% hidden bugs that I haven't seen while testing. I'll test this more thoroughly as I clean the code.
 
 #### Planned changes
