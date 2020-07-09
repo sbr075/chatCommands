@@ -68,6 +68,7 @@ If you got any complaints or tips feel free to let me know.
  
  - Extra information
    - Anything you see here is subject to change since this is an early version of this system. Most likely the functions will remain the same but the code will be cleaned up or optimized for better performance.
+   - There are 100% hidden bugs that I haven't seen while testing. I'll test this more thoroughly as I clean the code.
 
 #### Planned changes
 - Before I start on the adding the next feature to this plugin I will spend time on cleaing up the code. I'm also planning on adding a better interface, and/or command execution, to make it easier for the user to use these commands.
