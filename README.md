@@ -32,6 +32,11 @@ If you got any complaints or tips feel free to let me know.
  ### NB! Not all features are 100% guaranteed to make it in. I am working on this as a hobby but will try to include them all and more!
 
 ## Changelog
+### Version 0.4.1
+- In this version I've added all commands that are going to be accessible with /title. This is however not a full release seeing as the code is messy and missing some extras i.e. multiple parent title support. A full changelog will be released with 0.5.0
+- Added all commands with basic functionality for title feature
+#### Known issues with 0.4.1
+- help list is broken
 ### Version 0.4.0
 - Update 0.4.0 brings with it a new set of functions accessible with /broadcast. It allows administrators, or players with the correct permissions, to send a broadcast to the whole server either once or at a timed interval for a set duration of time.
   - New commands
