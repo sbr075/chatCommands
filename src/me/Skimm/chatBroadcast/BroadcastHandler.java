@@ -163,7 +163,7 @@ public class BroadcastHandler {
     		}
 			break;
 			
-		case "list":
+		case "list":  // /broadcast list
 			if (argv.length == 1) {
 				player.sendMessage(ChatColor.DARK_AQUA + "Broadcast list");
 				for (String key1 : main.broadcast.getConfig().getConfigurationSection("broadcasts").getKeys(false)) {

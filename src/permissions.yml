@@ -5,33 +5,68 @@
 #
 # ======================================================= #
 
+# Default title ideas
+# User
+# Trusted
+# Admin
+# Owner
+
 permissions:
-  default_user:
-    - emote.basic
-    - emote.use
-  default_admin:
-    - emote.admin
-    - broadcast.admin
-    - mod.admin
-    - chat.admin
-    - title.admin
+  titles:
+    names:
+      user:
+        uses: 0
+        color: "&7"
+      trusted:
+        uses: 0
+        color: "&a"
+      admin:
+        uses: 0
+        color: "&c"
+      owner:
+        uses: 0
+        color: "&d"
+    user:
+      perms:
+        - emote.help
+        - emote.use
+        - emote.list
+    trusted:
+      parent: user
+      perms:
+        - broadcast.help
+        - broadcast.send
+        - broadcast.list
+        - broadcast.info
+    admin:
+      parent: trusted
+      perms:
+        - emote.admin
+        - broadcast.admin
+    owner:
+      parent: admin
+      perms:
+        - emote.admin
+        - broadcast.admin
   emote:
     names:
-      - emote.basic
-      - emote.admin
+      - emote.help
+      - emote.permlist
+      - emote.list
       - emote.add
       - emote.edit
       - emote.remove
       - emote.use
+      - emote.admin
     commands:
       help:
-        - emote.basic
+        - emote.help
         - emote.admin
       list:
-        - emote.basic
+        - emote.permlist
         - emote.admin
-        - emote.use
       permlist:
+        - emote.permlist
         - emote.admin
       add:
         - emote.add
@@ -47,6 +82,38 @@ permissions:
         - emote.admin
   broadcast:
     names:
+      - broadcast.help
+      - broadcast.permlist
+      - broadcast.send
+      - broadcast.add
+      - broadcast.edit
+      - broadcast.remove
+      - broadcast.list
+      - broadcast.info
+      - broadcast.admin
+    help:
+      - broadcast.help
+      - broadcast.admin
+    list:
+      - broadcast.list
+      - broadcast.admin
+    send:
+      - broadcast.send
+      - broadcast.admin
+    add:
+      - broadcast.add
+      - broadcast.admin
+    edit:
+      - broadcast.edit
+      - broadcast.admin
+    remove:
+      - broadcast.remove
+      - broadcast.admin
+    info:
+      - broadcast.info
+      - broadcast.admin
+    permlist:
+      - broadcast.permlist
       - broadcast.admin
   mod:
     names:

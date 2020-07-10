@@ -41,8 +41,10 @@ public class EmoteHandler {
     					if (key1.equalsIgnoreCase("amount"))
     						continue;
     					
-    					if (toSkip > 0)
+    					if (toSkip > 0) {
     						toSkip--;
+    						continue;
+    					}
 
     					if (count >= 5)
     						break;
@@ -102,7 +104,7 @@ public class EmoteHandler {
     			
     			// Multiple tab
     			newEmote.set("multiple.args", -1);
-    			
+
     			// Multiple close tab
     			newEmote.set("multiple.close.sender", "<BLANK>");
     			newEmote.set("multiple.close.broadcast", "<BLANK>");

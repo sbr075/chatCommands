@@ -6,6 +6,7 @@ import me.Skimm.chatTitles.TitleHandler;
 import me.Skimm.chatBroadcast.*;
 import me.Skimm.chatChat.ChatHandler;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.bukkit.ChatColor;
@@ -15,6 +16,7 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -132,26 +134,39 @@ public class Main extends JavaPlugin implements Listener {
         // Used during shutdown and reloads
     }
     
+    // Change chat format from <name> text to name: text
+    @EventHandler
+    public void onChat(AsyncPlayerChatEvent e) {
+    	e.setFormat("%s: %s"); 
+    }
+    
+    // When player joins
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
     	Player player = event.getPlayer();
+    	
+    	// Check player titles
+    	// If op give Admin which gives all trusted and user permissions + admin permissions
+    	// If Trusted give all user permissions + trusted permissions
+    	// Owner has all permissions
+    	// If user already has permission on title given, don't give (prevent duplicates)
     	
     	// If player doesn't exist in registered players
     	if (permissions.getConfig().getConfigurationSection("players." + player.getUniqueId()) == null) {
     		// Set default permissions
     		ConfigurationSection newPlayer = permissions.getConfig().createSection("players." + player.getUniqueId().toString());
-    		List<String> defaultPerms = permissions.getConfig().getStringList("permissions.default_user");
-    		for (String key : defaultPerms) {
-    			newPlayer.set("perms." + key, key);
-    		}
-    		
+
+    		String title;
     		// If player is op, assign admin permissions
     		if (player.isOp()) {
-    			List<String> defaultAdmin = permissions.getConfig().getStringList("permissions.default_admin");
-    			for (String key : defaultAdmin) {
-    				newPlayer.set("perms." + key, key);
-    			}
+    			newPlayer.set("title", "admin");
+    			title = ChatColor.translateAlternateColorCodes('&', "[" + permissions.getConfig().getString("permissions.titles.names.admin.color") + "ADMIN&f] " + player.getDisplayName());
     		}
+    		else {
+    			newPlayer.set("title", "user");
+    			title = ChatColor.translateAlternateColorCodes('&', "[" + permissions.getConfig().getString("permissions.titles.names.user.color") + "USER&f] " + player.getDisplayName());
+    		}
+    		player.setDisplayName(title);
     		
     		// Set up cooldown section
     		newPlayer.set("cooldown", "0");
@@ -171,35 +186,86 @@ public class Main extends JavaPlugin implements Listener {
      * label - i.e. emote
      * command - i.e. help
      */
+    
+    private ArrayList<String> getPermList(Player player) {
+    	// Fetch player title from config file
+    	String playerTitle = permissions.getConfig().getString("players." + player.getUniqueId() + ".title");
+    	
+    	ArrayList<String> playerPerms = new ArrayList<String>();
+    	
+		// Iterate through all extra permissions and add them to playerPerms
+    	while (permissions.getConfig().getConfigurationSection("permissions.titles." + playerTitle + ".parent") != null) {
+    		// Add perms from current title
+    		ArrayList<String> titlePerms = (ArrayList<String>) permissions.getConfig().getStringList("permissions.titles." + playerTitle + ".perms");
+    		
+    		// Remove duplicates from titlePerms
+    		titlePerms.removeAll(playerPerms);
+    		
+    		// Add non duplicates to playerPerms
+    		playerPerms.addAll(titlePerms);
+    		
+    		// Set playerTitle to extra player title
+    		playerTitle = permissions.getConfig().getString("permissions.titles" + playerTitle + ".parent");
+    	}
+    	
+    	// Will fail current title if extra is null
+    	
+    	if (permissions.getConfig().getConfigurationSection("permissions.titles." + playerTitle + ".parent") == null) {
+    		if (permissions.getConfig().getConfigurationSection("permissions.titles." + playerTitle + ".perms") != null) {
+    			// Add perms from current title
+        		ArrayList<String> titlePerms = (ArrayList<String>) permissions.getConfig().getStringList("permissions.titles." + playerTitle + ".perms");
+        		
+        		// Remove duplicates from titlePerms
+        		titlePerms.removeAll(playerPerms);
+        		
+        		// Add non duplicates to playerPerms
+        		playerPerms.addAll(titlePerms);
+    		}
+    	}
+    	
+    	if (playerPerms.isEmpty())
+    		player.sendMessage(ChatColor.RED + "[ERROR]:" + ChatColor.WHITE + " Title '" + playerTitle + "' has no permissions");
+    	
+    	return playerPerms;
+    }
+    
     public boolean checkPermissions(Player player, String label, String command) {
     	if (player.isOp())
     		return true;
     	
+    	// label = emote, broadcast ect.
+    	// command = help, send, use ect.
+    	
+    	player.sendMessage("Checking permissions: permissions." + label + ".commands." + command);
+    	// get player title, check title permissions and compare against command permissions
+    	// Compare lists and check if list is 0,
+    	// if 0 no permission else permission
     	// Check users permissions
-    	List<String> reqPerms = permissions.getConfig().getStringList("permissions." + label + ".commands." + command);
-    	for (String perm : reqPerms) {
-    		if (permissions.getConfig().getConfigurationSection("players." + player.getUniqueId() + ".perms." + label).contains(perm.split("\\.")[1]))
-    			return true;
+    	
+    	ArrayList<String> playerPerms = getPermList(player);
+    	if (playerPerms.isEmpty())
+    		return false;
+    	
+    	ArrayList<String> cmdPerms = (ArrayList<String>) permissions.getConfig().getStringList("permissions." + label + ".commands." + command);
+    	
+    	if (playerPerms.retainAll(cmdPerms)) {
+    		return true;
     	}
     	return false;
     }
     
     /* 
      * Check if player have specific permission
-     * player - player who sent request
-     * perm - i.e. "emote.help"
-     *   tokens[0] = "emote"
-     *   tokens[1] = "help"
      */
     public boolean checkSpecificPermission(Player player, String perm) {
     	if (player.isOp())
     		return true;
     	
-    	String[] tokens = perm.split("\\.");
-    	if (permissions.getConfig().getConfigurationSection("players." + player.getUniqueId() + ".perms." + tokens[0]).contains(tokens[1])) {
-    		return true;
-    	}
-    	return false;
+    	ArrayList<String> playerPerms = getPermList(player);
+    	if (playerPerms.isEmpty() || !playerPerms.contains(perm))
+    		return false;
+
+    	return true;
     }
 
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] argv) {
@@ -230,6 +296,7 @@ public class Main extends JavaPlugin implements Listener {
     		case "help":
     			if (argv.length == 1) {
     				// titleName - user, admin
+    				player.sendMessage("label: " + label);
     				for (String titleName : commands.getConfig().getConfigurationSection("commands." + label).getKeys(false)) {
     					// Prevent normal players from seeing admin help tab
     					if (titleName.equalsIgnoreCase("admin")) {
@@ -287,7 +354,6 @@ public class Main extends JavaPlugin implements Listener {
 	        	
 	        	case "title":
 	        		titleCommands.commandHandler(player, label, argv);
-	        		player.sendMessage("This feature is not yet implemented");
 	        		break;
 	        	
 	        	default:

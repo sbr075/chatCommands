@@ -144,11 +144,16 @@ commands:
       give:
         usage: "&b/title give <player> <title>"
         description: "- Award a player with a title"
+      add:
+        usage: "&b/title add <name>
+        description: "- Add a new title"
+      	usage: "&b/title add <perm/parent/color> <name> <perm/parent title/color code>
+      	description: "- Add new permissions, parent or color to title"
       remove:
         usage: "&b/title remove <player> <title>"
         description: "- Remove a title from a player"
-      titles:
-        usage: "&b/title titles"
+      list:
+        usage: "&b/title list"
         description: "- Show all available titles"
       info:
         usage: "&b/title info <title>"
