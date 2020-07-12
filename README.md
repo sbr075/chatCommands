@@ -35,6 +35,11 @@ If you got any complaints or tips feel free to let me know.
 ### Version 0.4.2
 - Added multi-parent support for titles
 - Added proper title removal, will now set players with title to be removed to a default set title
+- Fixed help list
+- Updated onJoin system to now work with new title permission system
+#### Known issues with 0.4.2
+- Broadcast removal doesn't fully remove broadcast (gets remade)
+- Title remove doesn't set default title
 ### Version 0.4.1
 - In this version I've added all commands that are going to be accessible with /title. This is however not a full release seeing as the code is messy and missing some extras i.e. multiple parent title support. A full changelog will be released with 0.5.0
 - Added all commands with basic functionality for title feature
