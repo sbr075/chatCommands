@@ -13,6 +13,7 @@
 
 permissions:
   titles:
+    default: user
     names:
       user:
         uses: 0
@@ -20,9 +21,12 @@ permissions:
       trusted:
         uses: 0
         color: "&a"
-      admin:
+      moderator:
         uses: 0
         color: "&c"
+      admin:
+        uses: 0
+        color: "&5"
       owner:
         uses: 0
         color: "&d"
@@ -30,24 +34,46 @@ permissions:
       perms:
         - emote.help
         - emote.use
+        - emote.send
         - emote.list
     trusted:
-      parent: user
+      parent:
+        - user
       perms:
         - broadcast.help
-        - broadcast.send
         - broadcast.list
         - broadcast.info
+        - broadcast.send
+    moderator:
+      parent:
+        - trusted
+      perms:
+        - title.help
+        - title.list
+        - title.add
+        - title.remove
+        - title.give
+        - title.info
+        - broadcast.add
+        - broadcast.edit
+        - broadcast.remove
     admin:
-      parent: trusted
+      parent: 
+        - trusted
+        - moderator
       perms:
         - emote.admin
         - broadcast.admin
+        - title.admin
     owner:
-      parent: admin
+      parent: 
+        - admin
       perms:
         - emote.admin
         - broadcast.admin
+        - title.admin
+
+     
   emote:
     names:
       - emote.help
@@ -123,6 +149,30 @@ permissions:
       - chat.admin
   title:
     names:
-      - chat.admin
+      - title.admin
+      - title.help
+      - title.list
+      - title.add
+      - title.remove
+      - title.give
+      - title.info
+    help:
+      - title.help
+      - title.admin
+    list:
+      - title.list
+      - title.admin
+    add:
+      - title.add
+      - title.remove
+    remove:
+      - title.remove
+      - title.admin
+    give:
+      - title.give
+      - title.admin
+    info:
+      - title.info
+      - title.admin
   
 players:

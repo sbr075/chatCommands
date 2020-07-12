@@ -1,17 +1,12 @@
 package me.Skimm.chatTitles;
 
 import java.util.List;
-import java.util.regex.Pattern;
 
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 
 import me.Skimm.chatCommands.*;
-
-// TODO
-// Add multi parent permissions
-// Add title clean up (maybe)
 
 public class TitleHandler {
 	private Main plugin;
@@ -151,12 +146,17 @@ public class TitleHandler {
 			}
 
 			if (argv.length == 2) { // /title remove <name>, remove title
-				// Set title to null in file (this deletes it) and save
-				if (plugin.permissions.getConfig().getInt("permissions.titles.names." + name + ".uses") != 0) {
-					player.sendMessage(ChatColor.RED + "[ERROR]:" + ChatColor.WHITE + " Title '" + name + "' is still in use");
-					return;
-				}
+				int uses = plugin.permissions.getConfig().getInt("permissions.titles.names." + name + ".uses");
+				player.sendMessage("Removing title from " + uses + " users");
 				
+				// Set title users title to specified default title
+				for (String uuid : plugin.permissions.getConfig().getConfigurationSection("players").getKeys(false)) {
+					if (plugin.permissions.getConfig().getConfigurationSection("players." + uuid).contains("title." + name)) {
+						title = plugin.permissions.getConfig().getConfigurationSection("players." + uuid);
+						title.set("title", plugin.permissions.getConfig().getString("permissions.titles.default"));
+					}
+				}
+				// Set title to null in file (this deletes it) and save				
 				plugin.permissions.getConfig().getConfigurationSection("permissions.titles").set(name, null);
 				plugin.permissions.getConfig().getConfigurationSection("permissions.titles.names").set(name, null);
 				plugin.permissions.saveConfig();
