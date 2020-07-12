@@ -32,6 +32,9 @@ If you got any complaints or tips feel free to let me know.
  ### NB! Not all features are 100% guaranteed to make it in. I am working on this as a hobby but will try to include them all and more!
 
 ## Changelog
+### Version 0.4.2
+- Added multi-parent support for titles
+- Added proper title removal, will not set players with title to be removed to a default set title
 ### Version 0.4.1
 - In this version I've added all commands that are going to be accessible with /title. This is however not a full release seeing as the code is messy and missing some extras i.e. multiple parent title support. A full changelog will be released with 0.5.0
 - Added all commands with basic functionality for title feature
