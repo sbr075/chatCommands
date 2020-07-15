@@ -109,8 +109,8 @@ commands:
       mode:
         usage: "&b/chat <mode>"
         description: "- Change chat mode to specified mode"
-      modes:
-        usage: "&b/chat modes"
+      list:
+        usage: "&b/chat list"
         description: "- Shows all available chat modes"
       create:
         usage: "&b/chat create <group/party> <group name>"
