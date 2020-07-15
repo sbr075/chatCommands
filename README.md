@@ -24,7 +24,7 @@ If you got any complaints or tips feel free to let me know.
     - Group/parties
       1. Roles in groups
       2. Groups are permanent, parties are not
- 5. Titles
+ 5. Titles **Implemented**
     1. Titles for better permission management
  6. Logs
     1. This feature is still uncertain if it'll make it into the final cut
@@ -32,6 +32,30 @@ If you got any complaints or tips feel free to let me know.
  ### NB! Not all features are 100% guaranteed to make it in. I am working on this as a hobby but will try to include them all and more!
 
 ## Changelog
+### Version 0.4.3
+- General
+  - Fixed /<label> help command
+  - Updated "commands.yml" to include missing commands
+- Broadcast
+  - Removal of broadcast will now cancel the task properly
+  - Fixed broadcast command "edit add runtime"
+- Emote
+  - Fixed "emotes.yml" by removing unintended "commands" tab
+  - Rewrote a part of command "/emote use"
+    - Should now be more optimized
+    - Includes more warnings to guide user if something goes wrong
+  - Removed old permission add/remove from emote commands
+- Title
+  - Fixes
+    - Fixed add parent to support multiple parents
+    - Fixed removal of title
+    - Fixed changing of color of title
+    - Fixed removal of perms from titles
+  - Addon(s)
+    - Added new command "/title default <name>"
+      - Adds the abiity to designate new default title
+#### Update info
+- Update 0.4.3 is a Hotfix update fixing some minor and major bugs with the plugin. This update brings no new content with it unfortunately.
 ### Version 0.4.2
 - Added multi-parent support for titles
 - Added proper title removal, will now set players with title to be removed to a default set title
