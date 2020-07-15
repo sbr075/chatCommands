@@ -145,13 +145,18 @@ commands:
         usage: "&b/title give <player> <title>"
         description: "- Award a player with a title"
       add:
-        usage: "&b/title add <name>
+        usage: "&b/title add <name>"
         description: "- Add a new title"
-      	usage: "&b/title add <perm/parent/color> <name> <perm/parent title/color code>
-      	description: "- Add new permissions, parent or color to title"
+        usage: "&b/title add <perm/parent/color> <name> <perm/parent title/color code>"
+        description: "- Add new permissions, parent or color to title"
       remove:
         usage: "&b/title remove <player> <title>"
         description: "- Remove a title from a player"
+        usage: "&b/title remove <title> <perm>"
+        description: "- Remove permission from title"
+      default:
+        usage: "&b/title default <title>"
+        description: "- Set a new default title"
       list:
         usage: "&b/title list"
         description: "- Show all available titles"
@@ -174,6 +179,9 @@ commands:
       list: 
         usage: "&b/emote list <num>"
         description: "- Returns a list of all available emotes"
+    admin:
+      header: 
+        description: "&bAdmin commands"
       add: 
         usage: "&b/emote add <name>"
         description: "- Add a new emote. Remember to edit its values!"
@@ -186,15 +194,6 @@ commands:
       remove: 
         usage: "&b/emote remove <name>"
         description: "- Remove an emote"
-    admin:
-      header: 
-        description: "&bAdmin commands"
-      add: 
-        usage: "&b/emote add <permission> <player>"
-        description: "- Give a player permissions"
-      remove: 
-        usage: "&b/emote remove <permission> <player>"
-        description: "- Remove permission from player"
       perm_list: 
         usage: "&bemote permlist"
         description: "- Show all available permissions"

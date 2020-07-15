@@ -14,6 +14,7 @@ import me.Skimm.chatCommands.Main;
 
 public class BroadcastScheduler extends BukkitRunnable {
 	
+	ConfigurationSection broadcast;
 	SimpleDateFormat format = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
 	Date currentTime, endTime = null;
     private final Main plugin;
@@ -35,7 +36,7 @@ public class BroadcastScheduler extends BukkitRunnable {
 			newTime = Integer.parseInt(time.substring(0, time.length() - 1));
 		}
 		catch (NumberFormatException e) {
-			player.sendMessage(ChatColor.RED + "Unknown time format: " + time);
+			player.sendMessage(ChatColor.RED + "[ERROR]:" + ChatColor.WHITE + " Unknown time format: " + time);
 			return -1;
 		}
 		
@@ -51,7 +52,7 @@ public class BroadcastScheduler extends BukkitRunnable {
 			newTime *= 60 * 60 * conversionRate;
 			break;
 		default:
-			player.sendMessage(ChatColor.RED + "Unknown time format: " + argv[2]);
+			player.sendMessage(ChatColor.RED + "[ERROR]:" + ChatColor.WHITE + " Unknown time format: " + argv[2]);
 			return -1;
 		}
 		
@@ -62,20 +63,26 @@ public class BroadcastScheduler extends BukkitRunnable {
 	public void removeListing(String name) {
 		// Check if broadcast exists
 		if (!plugin.broadcast.getConfig().contains("broadcasts." + name)) {
-			player.sendMessage(ChatColor.RED + "Broadcast '" + name + "' doesn't exist");
+			player.sendMessage(ChatColor.RED + "[ERROR]:" + ChatColor.WHITE + " Broadcast '" + name + "' doesn't exist");
 			return;
 		}
 		
 		// Update broadcast amount, set listing to null and save
-		ConfigurationSection editListing = plugin.broadcast.getConfig().getConfigurationSection("broadcasts");
-		editListing.set("current_broadcasts", editListing.getInt("current_broadcasts") - 1);
+		broadcast = plugin.broadcast.getConfig().getConfigurationSection("broadcasts");
+		broadcast.set("current_broadcasts", broadcast.getInt("current_broadcasts") - 1);
 		
+		Bukkit.getScheduler().cancelTask(broadcast.getInt(name + ".taskID"));
+
 		plugin.broadcast.getConfig().set("broadcasts." + name, null);
 		plugin.broadcast.saveConfig();
+		
+		
 	}
 	
 	@Override
 	public void run() {
+		broadcast = plugin.broadcast.getConfig().getConfigurationSection("broadcasts");
+		
 		// First time setup
 		if (!plugin.broadcast.getConfig().contains("broadcasts." + argv[1])) {
 			int duration = 0;
@@ -91,22 +98,23 @@ public class BroadcastScheduler extends BukkitRunnable {
 				this.cancel();
 				return;
 			}
+			
+			endTime = new Date(currentTime.getTime() + duration);
 
 			// Set values in file
-			ConfigurationSection newBroadcast = plugin.broadcast.getConfig().createSection("broadcasts." + argv[1]);
-			newBroadcast.set("creator.display_name", player.getDisplayName());
-			newBroadcast.set("creator.uuid", player.getUniqueId().toString());
-			newBroadcast.set("msg", msg);
-			newBroadcast.set("start_time", format.format(currentTime));
-
-			endTime = new Date(currentTime.getTime() + duration);
-			newBroadcast.set("end_time", format.format(endTime));
-
-			ConfigurationSection editAmount = plugin.broadcast.getConfig().getConfigurationSection("broadcasts");
-			editAmount.set("current_broadcasts", editAmount.getInt("current_broadcasts") + 1);
+			broadcast.set(argv[1] + ".creator.display_name", player.getDisplayName());
+			broadcast.set(argv[1] + ".creator.uuid", player.getUniqueId().toString());
+			broadcast.set(argv[1] + ".msg", msg);
+			broadcast.set(argv[1] + ".start_time", format.format(currentTime));
+			broadcast.set(argv[1] + ".end_time", format.format(endTime));
+			broadcast.set(argv[1] + ".taskID", this.getTaskId());
+			broadcast.set("current_broadcasts", broadcast.getInt("current_broadcasts") + 1);
+			
+			// Save config
 			plugin.broadcast.saveConfig();
 			
-			player.sendMessage(ChatColor.GREEN + "Successfully" + ChatColor.WHITE + " created broadcast");
+			// Inform player
+			player.sendMessage(ChatColor.GREEN + "[INFO]" + ChatColor.WHITE + " Successfully created broadcast");
 			player.sendMessage("Name: " + argv[1]);
 			player.sendMessage("Start time: " + format.format(currentTime));
 			player.sendMessage("End time: " + format.format(endTime));
@@ -117,14 +125,14 @@ public class BroadcastScheduler extends BukkitRunnable {
 		
 		// Get end time specified on listing
 		try {
-			endTime = format.parse(plugin.broadcast.getConfig().getString("broadcasts." + argv[1] + ".end_time"));
+			endTime = format.parse(broadcast.getString(argv[1] + ".end_time"));
 		} catch (ParseException e) {
 			e.printStackTrace();
 		}
 
 		// Check if current is after end
 		if (currentTime.after(endTime)) {
-			player.sendMessage("name: " + argv[1] + ", broadcast ended at: " + format.format(currentTime));
+			player.sendMessage(ChatColor.GREEN + "[INFO]:" + ChatColor.WHITE + " Broadcast: " + argv[1] + " ended at: " + format.format(currentTime));
 			removeListing(argv[1]);
 			this.cancel();
 			return;

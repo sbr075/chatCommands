@@ -25,6 +25,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 /*
  * Known issues
  * 1. Broadcast removal doesn't work (gets remade)
+ * 2. Title removal doesn't set default title
  */
 
 /*
@@ -97,6 +98,7 @@ import org.bukkit.plugin.java.JavaPlugin;
  * TODO
  * 1. Clean up title package
  * 2. Fix known issues
+ * 3. If removal of default, need to specify new default or if rename default, rename default tab too
  */
 
 public class Main extends JavaPlugin implements Listener {
@@ -185,22 +187,13 @@ public class Main extends JavaPlugin implements Listener {
     	}
     }
     
-    /*
-     * Check player permission against command they wish to execute
-     * player - player who sent request
-     * label - i.e. emote
-     * command - i.e. help
-     */
-    
     private void traverseParents(Player player, ArrayList<String> perms, String titleName) {
-    	player.sendMessage("permissions.titles." + titleName + ".parent");
     	ArrayList<String> titleParents = (ArrayList<String>) permissions.getConfig().getStringList("permissions.titles." + titleName + ".parent");
     	ArrayList<String> titlePerms = (ArrayList<String>) permissions.getConfig().getStringList("permissions.titles." + titleName + ".perms");
     	
     	// Add permissions belonging to title
     	if (titlePerms.size() > 0) {
     		for (int i = 0; i < titlePerms.size(); i++) {
-    			player.sendMessage("Perm: " + titlePerms.get(i));
     			if (!perms.contains(titlePerms.get(i)))
 					perms.add(titlePerms.get(i));
     		}
@@ -221,7 +214,6 @@ public class Main extends JavaPlugin implements Listener {
     	// label = emote, broadcast ect.
     	// command = help, send, use ect.
     	
-    	player.sendMessage("Checking permissions: permissions." + label + "." + command);
     	// get player title, check title permissions and compare against command permissions
     	// Compare lists and check if list is 0,
     	// if 0 no permission else permission
@@ -294,15 +286,15 @@ public class Main extends JavaPlugin implements Listener {
     			if (argv.length == 1) {
     				// titleName - user, admin
     				player.sendMessage("label: " + label);
-    				for (String titleName : commands.getConfig().getConfigurationSection("commands." + label).getKeys(false)) {
+    				for (String titleName : commands.getConfig().getConfigurationSection("commands." + label.toLowerCase()).getKeys(false)) {
     					// Prevent normal players from seeing admin help tab
     					if (titleName.equalsIgnoreCase("admin")) {
     						if (!checkSpecificPermission(player, label + ".admin"))
     							break;
     					}
-    					player.sendMessage(" ");
+    					
     					// key1 - info, <label>
-    					for (String labelName : commands.getConfig().getConfigurationSection("commands." + label + "." + titleName).getKeys(false)) {
+    					for (String labelName : commands.getConfig().getConfigurationSection("commands." + label.toLowerCase() + "." + titleName).getKeys(false)) {
     						// key2 - description, usage
     						for (String infoName: commands.getConfig().getConfigurationSection("commands." + label + "." + titleName + "." + labelName).getKeys(false)) {
     							player.sendMessage(ChatColor.translateAlternateColorCodes('&', commands.getConfig().getString("commands." + label + "." + titleName + "." + labelName + "." + infoName)));

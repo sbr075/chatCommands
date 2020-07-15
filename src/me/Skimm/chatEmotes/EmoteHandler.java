@@ -3,7 +3,6 @@ package me.Skimm.chatEmotes;
 import me.Skimm.chatCommands.*;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.ConfigurationSection;
@@ -95,15 +94,11 @@ public class EmoteHandler {
     			// General info tab
     			newEmote.set("description", "<BLANK>");
     			newEmote.set("usage", "/emote use " + emoteName + " <optional receiver>");
-    			newEmote.set("maxdistance", -1);
+    			newEmote.set("maxdistance", 0);
     			
     			// Single tab
-    			newEmote.set("single.args", -1);
     			newEmote.set("single.sender", "<BLANK>");
     			newEmote.set("single.receiver", "<BLANK>");
-    			
-    			// Multiple tab
-    			newEmote.set("multiple.args", -1);
 
     			// Multiple close tab
     			newEmote.set("multiple.close.sender", "<BLANK>");
@@ -118,33 +113,6 @@ public class EmoteHandler {
     			player.sendMessage(ChatColor.GREEN + "Successfully" + ChatColor.WHITE + " created emote '" + emoteName + "'");
     			
     			main.emote.saveConfig();
-    		}
-    		else if (argv.length == 3) { // /emote add <permission> <player>
-    			if (main.checkSpecificPermission(player, "emote.admin")) {
-    				// Get list of all permissions
-    				List<String> allPerms = main.permissions.getConfig().getStringList("permissions." + label + ".names");
-    				
-    				// Check if permission exists
-    				if (!(allPerms.contains(argv[1]))) {
-    					player.sendMessage("This permission does not exist, check permission list to see available ones");
-    					return;
-    				}
-    				
-    				// Find player
-    				try {
-    	    			player.getServer().getPlayer(argv[2]);
-    	    		}
-    	    		catch (Exception e) {
-    	    			player.sendMessage("Can't find player '" + argv[2] + "'");
-    	    		}
-
-    				// Update player permission listing
-    				ConfigurationSection newPerm = main.permissions.getConfig().getConfigurationSection("players." + player.getUniqueId().toString() + ".perms.emote");
-    				String[] tokens = argv[1].split("\\.");
-    				newPerm.set(tokens[1], argv[1]);
-
-    				main.permissions.saveConfig();
-    			}
     		}
     		else {
     			player.sendMessage(ChatColor.RED + "Invalid use of command. Type /emote help for more information");
@@ -230,89 +198,44 @@ public class EmoteHandler {
     			main.emote.getConfig().set("emotes." + emoteName, null);
     			main.emote.saveConfig();
     		}
-    		else if (argv.length == 3) {
-    			if (main.checkSpecificPermission(player, "emote.admin")) {
-    				List<String> allPerms = main.permissions.getConfig().getStringList("permissions." + label + ".names");
-    				
-    				// Check if permission exists
-    				if (!(allPerms.contains(argv[1]))) {
-    					player.sendMessage("This permission does not exist, check permission list to see available ones");
-    					return;
-    				}
-    				
-    				// Get player
-    				try {
-    	    			player.getServer().getPlayer(argv[2]);
-    	    		}
-    	    		catch (Exception e) {
-    	    			player.sendMessage("Can't find player '" + argv[2] + "'");
-    	    		}
-
-    				// Update listing and save
-    				ConfigurationSection newPerm = main.permissions.getConfig().getConfigurationSection("players." + player.getUniqueId().toString() + ".perms.emote");
-    				String[] tokens = argv[1].split("\\.");
-    				newPerm.set(tokens[1], null);
-
-    				main.permissions.saveConfig();
-    			}
-    		}
     		else {
     			player.sendMessage(ChatColor.RED + "Invalid use of command. Type /emote help for more information");
     		}
     		break;
     		
     	case "use":
-    		if (argv.length == 2) {
-        		String emoteName = argv[1].toLowerCase();
-        		ArrayList<String> emoteGenInfo = new ArrayList<String>();
-        		ArrayList<String> emoteSingleInfo = new ArrayList<String>();
-        		ArrayList<String> emoteMultipleInfo = new ArrayList<String>();
-        		ArrayList<ArrayList<String>> emoteAllInfo = new ArrayList<ArrayList<String>>();
+    		if (argv.length == 2 || argv.length == 3) {
+    			String emoteName = argv[1].toLowerCase();
+    			if (!main.emote.getConfig().getConfigurationSection("emotes").contains(emoteName)) {
+    				player.sendMessage(ChatColor.RED + "[ERROR]" + ChatColor.WHITE + " Emote '" + emoteName + "' doesn't exist");
+    				break;
+    			}
+    			
+    			ConfigurationSection emoteInfo = main.emote.getConfig().getConfigurationSection("emotes." + emoteName);
+    			ArrayList<String> emoteAllInfo = new ArrayList<String>();
 
-        		// Fetches all emote information
-        		for (String key1 : main.emote.getConfig().getConfigurationSection("emotes").getKeys(false)) {
-        			if (!key1.equalsIgnoreCase(emoteName)) {
-						continue;
-					}
-        			
-        			for (String key2 : main.emote.getConfig().getConfigurationSection("emotes." + key1).getKeys(false)) {
-						String arg;
-						switch(key2) {
-						case "maxdistance":
-							arg = String.valueOf(main.emote.getConfig().getInt("emotes." + key1 + "." + key2));
-							emoteGenInfo.add(arg);
-							break;
-							
-						case "single":
-							for (String args : main.emote.getConfig().getConfigurationSection("emotes." + key1 + "." + key2).getKeys(false)) {
-								arg = main.emote.getConfig().getString("emotes." + key1 + "." + key2 + "." + args);
-								emoteSingleInfo.add(arg);
-							}
-							break;
-							
-						case "multiple":
-							for (String args : main.emote.getConfig().getConfigurationSection("emotes." + key1 + "." + key2).getKeys(false)) {
-								if (args.equalsIgnoreCase("args")) {
-									arg = main.emote.getConfig().getString("emotes." + key1 + "." + key2 + "." + args);
-									emoteMultipleInfo.add(arg);
-									continue;
-								}
+    			emoteAllInfo.add(emoteInfo.getString("maxdistance"));
 
-								for (String args2 : main.emote.getConfig().getConfigurationSection("emotes." + key1 + "." + key2 + "." + args).getKeys(false)) {
-									arg = main.emote.getConfig().getString("emotes." + key1 + "." + key2 + "." + args + "." + args2);
-									emoteMultipleInfo.add(arg);
-									
-								}
-							}
-							break;
-						}
-					}
+        		for (String infoTab : emoteInfo.getKeys(false)) {
+        			switch (infoTab) {
+        			case "single":
+        				for (String info : emoteInfo.getConfigurationSection(infoTab).getKeys(false)) {
+        					emoteAllInfo.add(emoteInfo.getString(infoTab + "." + info));
+        				}
+        				
+        				// This is added to be a receiver placeholders
+        				emoteAllInfo.add("<BLANK>");
+        				break;
+        			case "multiple":
+        				for (String info : emoteInfo.getConfigurationSection(infoTab).getKeys(false)) {
+        					for (String dist: emoteInfo.getConfigurationSection(infoTab + "." + info).getKeys(false)) {
+        						emoteAllInfo.add(emoteInfo.getString(infoTab + "." + info + "." + dist));
+        					}
+        				}
+        				break;
+        			}
         		}
-        		// Save it all to list of lists
-        		emoteAllInfo.add(emoteGenInfo);
-        		emoteAllInfo.add(emoteSingleInfo);
-        		emoteAllInfo.add(emoteMultipleInfo);
-        		
+
         		// Parse message
         		msg.msgParser(player, argv, emoteAllInfo);
     		}

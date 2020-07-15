@@ -37,7 +37,7 @@ public class BroadcastHandler {
 				for (int i = 1; i < argv.length; i++)
 					msg += argv[i] + " ";
 
-				Bukkit.broadcastMessage(msg);
+				Bukkit.broadcastMessage(ChatColor.RED + "[BROADCAST] " + ChatColor.WHITE + msg);
 			}
 			else {
     			player.sendMessage(ChatColor.RED + "Invalid use of command. Type /broadcast help for more information");
@@ -61,7 +61,7 @@ public class BroadcastHandler {
 			if (argv.length >= 4) {
 				// Check if broadcast already exists
 				if (main.broadcast.getConfig().contains("broadcasts." + argv[1])) {
-					player.sendMessage("Broadcast '" + argv[1] + "' already exists!");
+					player.sendMessage(ChatColor.RED + "[ERROR]:" + ChatColor.WHITE + " Broadcast '" + argv[1] + "' already exists!");
 					return;
 				}
 				
@@ -70,7 +70,7 @@ public class BroadcastHandler {
 				set_delay = broadcastScheduler.convertFromTimeformat(player, argv[2], 20);
 				
 				if (set_delay < min_delay) {
-					player.sendMessage(ChatColor.RED + "Interval can't be smaller than " + (min_delay / 20) + " seconds");
+					player.sendMessage(ChatColor.RED + "[ERROR]:" + ChatColor.WHITE + " Interval can't be smaller than " + (min_delay / 20) + " seconds");
 					return;
 				}
 
@@ -84,16 +84,10 @@ public class BroadcastHandler {
 			break;
 			
 		case "edit": // /broadcast edit <name> <add runtime/message> <new value>
-			if (argv.length >= 4) {
-				// Check if correct argument used
-				if (!(argv[2].toLowerCase().equalsIgnoreCase("message"))) {
-					player.sendMessage(ChatColor.RED + "Invalid use of command. Type /broadcast help for more information");
-					break;
-				}
-				
+			if (argv.length >= 4 && argv[2].toLowerCase().equalsIgnoreCase("message")) {
 				// Check if exists
 				if (!main.broadcast.getConfig().contains("broadcasts." + argv[1])) {
-					player.sendMessage("Broadcast '" + argv[1] + "' doesn't exist");
+					player.sendMessage(ChatColor.RED + "[ERROR]:" + ChatColor.WHITE + " Broadcast '" + argv[1] + "' doesn't exist");
 					break;
 				}
 				
@@ -109,16 +103,10 @@ public class BroadcastHandler {
 				main.broadcast.saveConfig();
 			}
 			
-			else if (argv.length == 5) {
-				// Check if correct arguments used
-				if (!(argv[2].toLowerCase().equalsIgnoreCase("add")) && !(argv[3].toLowerCase().equalsIgnoreCase("runtime"))) {
-					player.sendMessage(ChatColor.RED + "Invalid use of command. Type /broadcast help for more information");
-					break;
-				}
-				
+			else if (argv.length == 5 && argv[2].toLowerCase().equalsIgnoreCase("add") && argv[3].toLowerCase().equalsIgnoreCase("runtime")) {
 				// Check if listing exists
 				if (!main.broadcast.getConfig().contains("broadcasts." + argv[1])) {
-					player.sendMessage("Broadcast '" + argv[1] + "' doesn't exist");
+					player.sendMessage(ChatColor.RED + "[ERROR]:" + ChatColor.WHITE + " Broadcast '" + argv[1] + "' doesn't exist");
 					break;
 				}
 				

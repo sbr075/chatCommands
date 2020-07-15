@@ -1,7 +1,9 @@
 package me.Skimm.chatTitles;
 
 import java.util.List;
+import java.util.UUID;
 
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
@@ -13,6 +15,7 @@ public class TitleHandler {
 	
 	ConfigurationSection title;
 	String option, name, value, perm;
+	Player receiver = null;
 	
 	public TitleHandler(Main plugin) {
 		this.plugin = plugin;
@@ -100,10 +103,13 @@ public class TitleHandler {
 						plugin.permissions.getConfig().createSection("permissions.titles." + name + ".parent");
 					}
 					
+					List<String> parents = plugin.permissions.getConfig().getStringList("permissions.titles." + name + ".parent");
+					parents.add(value);
+					
 					
 					// Open file, set in new value and save
 					title = plugin.permissions.getConfig().getConfigurationSection("permissions.titles." + name);
-					title.set("parent", value);
+					title.set("parent", parents);
 					plugin.permissions.saveConfig();
 					break;
 					
@@ -118,13 +124,19 @@ public class TitleHandler {
 					
 					plugin.permissions.getConfig().getConfigurationSection("permissions.titles.names." + name).set("color", value);
 					plugin.permissions.saveConfig();
-					
-					// DIRTY HACK, needs proper title chat management
-					String[] args = new String[3];
-					args[0] = "give";
-					args[1] = player.getName();
-					args[2] = name;
-					commandHandler(player, "give", args);
+
+					// Change display name for all active title users to match new color
+					for (String uuid : plugin.permissions.getConfig().getConfigurationSection("players").getKeys(false)) {
+						title = plugin.permissions.getConfig().getConfigurationSection("players." + uuid);
+						if (title.getString("title").equalsIgnoreCase(name)) {
+							
+							receiver = Bukkit.getPlayer(UUID.fromString(uuid));
+							String curName = player.getDisplayName().substring(name.length() + 7, receiver.getDisplayName().length());
+							
+							String newTitle = ChatColor.translateAlternateColorCodes('&', "[" + plugin.permissions.getConfig().getString("permissions.titles.names." + name + ".color") + name.toUpperCase() + "&f] " + curName);
+							receiver.setDisplayName(newTitle);
+						}
+					}
 					break;
 					
 				default:
@@ -132,27 +144,52 @@ public class TitleHandler {
 				}
 			}
 			else {
-    			player.sendMessage(ChatColor.RED + "Invalid use of command. Type /broadcast help for more information");
+    			player.sendMessage(ChatColor.RED + "Invalid use of command. Type /title help for more information");
     		}
+			break;
+		case "default":
+			name = argv[1].toLowerCase();
+			
+			// If title doesn't exists
+			if (!plugin.permissions.getConfig().getConfigurationSection("permissions.titles.names").contains(name) ) {
+				player.sendMessage(ChatColor.RED + "[ERROR]:" + ChatColor.WHITE + " Title '" + name + "' doesn't exist");
+				break;
+			}
+			
+			title = plugin.permissions.getConfig().getConfigurationSection("permissions.titles");
+			title.set("default", name);
+			plugin.permissions.saveConfig();
 			break;
 			
 		case "remove":
 			name = argv[1].toLowerCase();
 			
-			// Check file if title exists
+			// If title doesn't exists
 			if (!plugin.permissions.getConfig().getConfigurationSection("permissions.titles.names").contains(name) ) {
 				player.sendMessage(ChatColor.RED + "[ERROR]:" + ChatColor.WHITE + " Title '" + name + "' doesn't exist");
 				break;
 			}
 
 			if (argv.length == 2) { // /title remove <name>, remove title
-				int uses = plugin.permissions.getConfig().getInt("permissions.titles.names." + name + ".uses");
-				player.sendMessage("Removing title from " + uses + " users");
+				// If title is default title
+				if (plugin.permissions.getConfig().getString("permissions.titles.default").equalsIgnoreCase(name)) {
+					player.sendMessage(ChatColor.RED + "[ERROR]:" + ChatColor.WHITE + " Title '" + name + "' is default title and can't be removed. Change default before removing");
+				}
 				
 				// Set title users title to specified default title
+				String[] args = new String[3];
+				args[0] = "give";
+				
 				for (String uuid : plugin.permissions.getConfig().getConfigurationSection("players").getKeys(false)) {
-					if (plugin.permissions.getConfig().getConfigurationSection("players." + uuid).contains("title." + name)) {
-						title = plugin.permissions.getConfig().getConfigurationSection("players." + uuid);
+					title = plugin.permissions.getConfig().getConfigurationSection("players." + uuid);
+					if (title.getString("title").equalsIgnoreCase(name)) {
+
+						receiver =  Bukkit.getPlayer(UUID.fromString(uuid));
+						args[1] = player.getDisplayName().substring(name.length() + 7, receiver.getDisplayName().length());
+						player.sendMessage("Changing title for player: " + args[1]);
+						args[2] = plugin.permissions.getConfig().getString("permissions.titles.default");
+						commandHandler(player, "give", args);
+						
 						title.set("title", plugin.permissions.getConfig().getString("permissions.titles.default"));
 					}
 				}
@@ -163,34 +200,37 @@ public class TitleHandler {
 			}
 			else if (argv.length == 3) { // title remove <name> <perm>, remove permission from title
 				perm = argv[2];
-				
+
 				// Open file, set in new value and save
 				title = plugin.permissions.getConfig().getConfigurationSection("permissions.titles." + name);
 				
 				// Get already existing permissions
-				List<String> perms = plugin.permissions.getConfig().getStringList("permissions.titles." + name + ".perms");
-
-				// Add new permission to list
-				perms.remove(option);
+				List<String> perms = title.getStringList("perms");
+				if (!perms.contains(perm)) {
+					player.sendMessage(ChatColor.RED + "[ERROR]:" + ChatColor.WHITE + " Title '" + name + "' doesn't have permission '" + perm + "'");
+					break;
+				}
+				
+				// Remove permission from list
+				perms.remove(perm);
 				
 				// Write over list with new modified list and save
 				title.set("perms", perms);
 				plugin.permissions.saveConfig();
-
-				//plugin.permissions.getConfig().getConfigurationSection("permissions.titles." + name)
 			}
 			else {
-    			player.sendMessage(ChatColor.RED + "Invalid use of command. Type /broadcast help for more information");
+    			player.sendMessage(ChatColor.RED + "Invalid use of command. Type /title help for more information");
     		}
 			break;
 			
 		case "give":
 			if (argv.length == 3) { // /title give <player> <title>, give player a title
+				String curTitle, curName, newTitle;
 				name = argv[2].toLowerCase();
 				
-				Player receiver = null;
 		    	if (argv.length >= 3) {
 		    		try {
+		    			
 		    			receiver = player.getServer().getPlayer(argv[1]);
 		    		}
 		    		catch (Exception e) {
@@ -204,15 +244,16 @@ public class TitleHandler {
 					break;
 				}
 				
-				String curTitle = plugin.permissions.getConfig().getString("players." + receiver.getUniqueId() + ".title");
+				
+				curTitle = plugin.permissions.getConfig().getString("players." + receiver.getUniqueId() + ".title");
 				if (curTitle.equalsIgnoreCase(name)) {
 					player.sendMessage(ChatColor.RED + "[ERROR]:" + ChatColor.WHITE + " Player '" + player.getName() + "' already has the speicifed title");
 					return;
 				}
 				
-				String curName = player.getDisplayName().substring(curTitle.length() + 7, player.getDisplayName().length());
-				String title = ChatColor.translateAlternateColorCodes('&', "[" + plugin.permissions.getConfig().getString("permissions.titles.names." + name + ".color") + name.toUpperCase() + "&f] " + curName);
-				player.setDisplayName(title);
+				curName = player.getDisplayName().substring(curTitle.length() + 7, player.getDisplayName().length());
+				newTitle = ChatColor.translateAlternateColorCodes('&', "[" + plugin.permissions.getConfig().getString("permissions.titles.names." + name + ".color") + name.toUpperCase() + "&f] " + curName);
+				player.setDisplayName(newTitle);
 				
 				plugin.permissions.getConfig().set("permissions.titles.names." + curTitle + ".uses", plugin.permissions.getConfig().getInt("permissions.titles.names." + curTitle + ".uses") - 1);
 				plugin.permissions.getConfig().set("permissions.titles.names." + name + ".uses", plugin.permissions.getConfig().getInt("permissions.titles.names." + name + ".uses") + 1);
@@ -220,7 +261,7 @@ public class TitleHandler {
 				plugin.permissions.saveConfig();
 			}
 			else {
-    			player.sendMessage(ChatColor.RED + "Invalid use of command. Type /broadcast help for more information");
+    			player.sendMessage(ChatColor.RED + "Invalid use of command. Type /title help for more information");
     		}
 			break;
 		
@@ -233,7 +274,7 @@ public class TitleHandler {
 				}
 			}
 			else {
-    			player.sendMessage(ChatColor.RED + "Invalid use of command. Type /broadcast help for more information");
+    			player.sendMessage(ChatColor.RED + "Invalid use of command. Type /title help for more information");
     		}
 			break;
 			
@@ -265,7 +306,7 @@ public class TitleHandler {
 				} // Player given argument
 				else {
 					// Get receiver
-					Player receiver = player.getServer().getPlayer(argv[1]);
+					receiver = player.getServer().getPlayer(argv[1]);
 					player.sendMessage("Player '" + receiver.getDisplayName() + "' has title: " + plugin.permissions.getConfig().getString("players." + receiver.getUniqueId() + ".title"));
 				}
 			}

@@ -22,9 +22,8 @@
 #         broadcast: <message sent to the whole server>
 #         receiver: <message receiver gets>
 #
-# if maxdistance is set to 0 or -1 the close tab is nullified and wont be activated
-# if args is set to 0 or -1 the tab is nullified and wont be activated
-# if any of the string tabs are set to <BLANK> they will be ignored
+# if maxdistance is set to 0 or below the close tab is nullified and wont be activated
+# any of the string tabs are set to <BLANK> they will be ignored
 #
 # ======================================================= #
 
@@ -35,11 +34,9 @@ emotes:
     usage: /emote use hug <optional receiver>
     maxdistance: 10
     single:
-      args: 1
       sender: <BLANK>
       broadcast: s &chugs&f the thin air
     multiple:
-      args: 2
       close:
         sender: s &chugs r
         broadcast: s &chugs r
@@ -50,17 +47,15 @@ emotes:
         receiver: s sends you a virtual &chug
   kiss:
     description: Show your love for someone
-    usage: /emote use kiss <optional receiver>
+    usage: /emote use kiss <receiver>
     maxdistance: 10
     single:
-      args: 1
       sender: <BLANK>
-      broadcast: <BLANK> 
+      broadcast: <BLANK>
     multiple:
-      args: 2
       close:
         sender: s &dkisses r
-        receiver: Surprise!, s &dkisses&f you!
+        receiver: Surprise! s &dkisses&f you
         broadcast: s &dkisses r
       far:
         sender: You send a &dkiss&f to r
@@ -69,13 +64,11 @@ emotes:
   cut:
     description: Cut yourself. Don't do this too often
     usage: /emote use cut
-    maxdistance: -1
+    maxdistance: 0
     single:
-      args: 1
       sender: <BLANK>
       broadcast: s &4cuts&f themselves, ouch!
     multiple:
-      args: -1
       close:
         sender: <BLANK>
         receiver: <BLANK>
@@ -89,11 +82,9 @@ emotes:
     usage: /emote use wave <optional receiver>
     maxdistance: 100
     single:
-      args: 1
       sender: <BLANK>
       broadcast: s &ewaves&f to, uh, no one?
     multiple:
-      args: 2
       close:
         sender: You &ewave&f to r
         receiver: s &ewaves&f to you!
@@ -107,11 +98,9 @@ emotes:
     usage: /emote use smile <optional receiver>
     maxdistance: 100
     single:
-      args: 1
       sender: <BLANK>
       broadcast: s &esmiles&f randomly
     multiple:
-      args: 2
       close:
         sender: You &esmiles&f towards r
         receiver: s &esmiles&f at you
@@ -125,11 +114,9 @@ emotes:
     usage: /emote use flush <optional receiver>
     maxdistance: 100
     single:
-      args: 1
       sender: Your cheeks heath up. Oh no, you're &cflushing
       broadcast: s &cflushes
     multiple:
-      args: 2
       close:
         sender: You &cflush&f while looking at r
         receiver: You notice s &cflushes&f while looking at you
@@ -143,11 +130,9 @@ emotes:
     usage: /emote use laugh <optional receiver>
     maxdistance: 50
     single:
-      args: 1
       sender: You suddenly remembered a funny joke you heard once
       broadcast: s &elaughs&f quietly to themselves
     multiple:
-      args: 2
       close:
         sender: You &elaugh&f at r
         receiver: s &elaughs&f at you
@@ -159,13 +144,11 @@ emotes:
   angry:
     description: Let your rage out
     usage: /emote use angry <optional receiver>
-    maxdistance: -1
+    maxdistance: 0
     single:
-      args: 1
       sender: You become &cangry
       broadcast: s is really &cangry&f right now. Might want to stay away for a while
     multiple:
-      args: 2
       close:
         sender: <BLANK>
         receiver: <BLANK>
@@ -177,13 +160,11 @@ emotes:
   cry:
     description: Let those emotions out
     usage: /emote use cry
-    maxdistance: -1
+    maxdistance: 0
     single:
-      args: 1
-      sender:
+      sender: <BLANK>
       broadcast: s &1cries :'(
     multiple:
-      args: 0
       close:
         sender: <BLANK>
         receiver: <BLANK>
@@ -197,11 +178,9 @@ emotes:
     usage: /emote use dance <optional receiver>
     maxdistance: 50
     single:
-      args: 1
       sender: You're feeling on point today
       broadcast: s is &3dancing&f in front of the mirror
     multiple:
-      args: 2
       close:
         sender: You try to impress r with your &3dance
         receiver: s tries to impress you with their &3dance
@@ -215,11 +194,9 @@ emotes:
     usage: /emote use flirt <optional receiver>
     maxdistance: 50
     single:
-      args: 1
       sender: I hope you're just practicing
       broadcast: <BLANK>
     multiple:
-      args: 2
       close:
         sender: You &dflirt&f with r
         receiver: s &dflirts&f with you
@@ -233,11 +210,9 @@ emotes:
     usage: /emote use pinch <optional receiver>
     maxdistance: 5
     single:
-      args: 1
       sender: You &8pinch&f yourself
       broadcast: <BLANK>
     multiple:
-      args: 2
       close:
         sender: You &8pinch r
         receiver: s &8pinches&f you
@@ -287,5 +262,4 @@ emote_commands:
     extra:
       line1: "&aExtra information"
       line2: "&aIf fields are set to <BLANK> they will not be sent out"
-      line3: "&aIf distance is set to -1 close messages will not be sent"
-      line4: "&aIf args (single/multiple) are set to -1 it will not send out messages in those categories"
+      line3: "&aIf distance is set to 0 or below close messages will not be sent"

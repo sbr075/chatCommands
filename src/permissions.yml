@@ -72,8 +72,6 @@ permissions:
         - emote.admin
         - broadcast.admin
         - title.admin
-
-     
   emote:
     names:
       - emote.help
@@ -84,28 +82,27 @@ permissions:
       - emote.remove
       - emote.use
       - emote.admin
-    commands:
-      help:
-        - emote.help
-        - emote.admin
-      list:
-        - emote.permlist
-        - emote.admin
-      permlist:
-        - emote.permlist
-        - emote.admin
-      add:
-        - emote.add
-        - emote.admin
-      edit:
-        - emote.edit
-        - emote.admin
-      remove:
-        - emote.remove
-        - emote.admin
-      use:
-        - emote.use
-        - emote.admin
+    help:
+      - emote.help
+      - emote.admin
+    list:
+      - emote.permlist
+      - emote.admin
+    permlist:
+      - emote.permlist
+      - emote.admin
+    add:
+      - emote.add
+      - emote.admin
+    edit:
+      - emote.edit
+      - emote.admin
+    remove:
+      - emote.remove
+      - emote.admin
+    use:
+      - emote.use
+      - emote.admin
   broadcast:
     names:
       - broadcast.help
