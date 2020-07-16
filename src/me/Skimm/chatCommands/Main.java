@@ -10,7 +10,9 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -107,6 +109,8 @@ public class Main extends JavaPlugin implements Listener {
 	public ConfigManager permissions;
 	public ConfigManager commands;
 	public ConfigManager broadcast;
+	public ConfigManager playerInfo;
+	public ConfigManager chatConfig;
 	
 	// All feature packages
 	private EmoteHandler emoteCommands;
@@ -117,12 +121,6 @@ public class Main extends JavaPlugin implements Listener {
 
     @Override
     public void onEnable() {
-    	// Initialize config files
-    	this.emote = new ConfigManager(this, "emotes.yml");
-    	this.permissions = new ConfigManager(this, "permissions.yml");
-    	this.commands = new ConfigManager(this, "commands.yml");
-    	this.broadcast = new ConfigManager(this, "broadcast.yml");
-    	
     	// Initialize packages
     	this.emoteCommands = new EmoteHandler(this);
     	this.broadcastCommands = new BroadcastHandler(this);
@@ -130,6 +128,14 @@ public class Main extends JavaPlugin implements Listener {
     	this.modCommands = new ModHandler(this);
     	this.titleCommands = new TitleHandler(this);
     	
+    	// Initialize config files
+    	this.emote = new ConfigManager(this, "emotes.yml");
+    	this.permissions = new ConfigManager(this, "permissions.yml");
+    	this.commands = new ConfigManager(this, "commands.yml");
+    	this.broadcast = new ConfigManager(this, "broadcast.yml");
+    	this.playerInfo = new ConfigManager(this, "playerinfo.yml");
+    	this.chatConfig = new ConfigManager(this, "chatconfig.yml");
+
     	getServer().getPluginManager().registerEvents(this, this);
     }
 
@@ -138,10 +144,27 @@ public class Main extends JavaPlugin implements Listener {
         // Used during shutdown and reloads
     }
     
-    // Change chat format from <name> text to name: text
+	// Change chat format from <name> text to name: text
     @EventHandler
     public void onChat(AsyncPlayerChatEvent e) {
+    	String curMode;
+    	curMode = playerInfo.getConfig().getString("players." + e.getPlayer().getUniqueId().toString() + ".chat.mode");
+    	
     	e.setFormat("%s: %s"); 
+    	
+    	e.getPlayer().sendMessage("curmode: " + curMode);
+    	// Handle whispers
+    	if (curMode.equalsIgnoreCase("whisper")) {
+    		e.setCancelled(true); // Cancel event
+
+    		if (Bukkit.getServer().getPlayer(UUID.fromString(playerInfo.getConfig().getString("players." + e.getPlayer().getUniqueId().toString() + ".chat.lastsent"))) != null) {
+    			Player receiver = Bukkit.getServer().getPlayer(UUID.fromString(playerInfo.getConfig().getString("players." + e.getPlayer().getUniqueId().toString() + ".chat.lastsent")));
+    			receiver.sendMessage(ChatColor.translateAlternateColorCodes('&', chatConfig.getConfig().getString("chatModes.whisper.color") + chatCommands.stripName(e.getPlayer()) + " whispers to you: " + e.getMessage()));
+    		}
+    		else {
+    			e.getPlayer().sendMessage("Player is not online");
+    		}
+    	}
     }
     
     // When player joins
@@ -156,24 +179,21 @@ public class Main extends JavaPlugin implements Listener {
     	// If user already has permission on title given, don't give (prevent duplicates)
     	
     	// If player doesn't exist in registered players
-    	if (permissions.getConfig().getConfigurationSection("players." + player.getUniqueId()) == null) {
+    	if (playerInfo.getConfig().getConfigurationSection("players." + player.getUniqueId()) == null) {
     		// Set default permissions
-    		ConfigurationSection newPlayer = permissions.getConfig().createSection("players." + player.getUniqueId().toString());
+    		ConfigurationSection newPlayer = playerInfo.getConfig().createSection("players." + player.getUniqueId().toString());
     		ConfigurationSection editTitle = permissions.getConfig().getConfigurationSection("permissions.titles.names");
 
-    		String title;
     		// If player is op, assign admin permissions
     		if (player.isOp()) {
     			newPlayer.set("title", "admin");
-    			title = ChatColor.translateAlternateColorCodes('&', "[" + permissions.getConfig().getString("permissions.titles.names.admin.color") + "ADMIN&f] " + player.getDisplayName());
     			editTitle.set("admin.uses", editTitle.getInt("admin.uses") + 1);
     		}
     		else {
     			newPlayer.set("title", "user");
     			editTitle.set("user.uses", editTitle.getInt("user.uses") + 1);
-    			title = ChatColor.translateAlternateColorCodes('&', "[" + permissions.getConfig().getString("permissions.titles.names.user.color") + "USER&f] " + player.getDisplayName());
     		}
-    		player.setDisplayName(title);
+    		newPlayer.set("chat.mode", "all");
     		
     		// Set up cooldown section
     		newPlayer.set("cooldown", "0");
@@ -181,10 +201,52 @@ public class Main extends JavaPlugin implements Listener {
     		// Notify player
     		player.sendMessage("Player data has been created!");
     		permissions.saveConfig();
+    		playerInfo.saveConfig();
+    		
+    		updateDisplayName(player, 2, null);
     	}
     	else {
     		permissions.saveDefaultConfig();
     	}
+    }
+    
+    public void updateDisplayName(Player receiver, int option, String newVal) {
+    	String curName, curTitle, curMode, newName = "";
+    	curTitle = playerInfo.getConfig().getString("players." + receiver.getUniqueId() + ".title").toLowerCase();
+    	curMode = playerInfo.getConfig().getString("players." + receiver.getUniqueId() + ".chat.mode").toLowerCase();
+    	
+    	// [&fMODE&f][&fTITLE&f] <NAME>
+    	// Remove title and chat mode text to get normal name
+    	try {
+    		curName = receiver.getDisplayName().substring(curTitle.length() + curMode.length() + 13, receiver.getDisplayName().length());
+    	}
+    	catch (StringIndexOutOfBoundsException e) {
+    		curName = receiver.getDisplayName();
+    	}
+    	
+    	/*
+    	 * 0, update only title
+    	 * 1, update only chat mode
+    	 * 2, only used for first time setup, updates both
+    	 */
+    	switch(option) {
+    	case 0:
+    		newName = ChatColor.translateAlternateColorCodes('&', "[" + chatConfig.getConfig().getString("chatModes." + curMode + ".color") + curMode.toUpperCase() + "&f]"
+					+ "[" + permissions.getConfig().getString("permissions.titles.names." + newVal + ".color") + newVal.toUpperCase() + "&f] " 
+					+ curName);
+    		break;
+    	case 1:
+    		newName = ChatColor.translateAlternateColorCodes('&', "[" + chatConfig.getConfig().getString("chatModes." + newVal + ".color") + newVal.toUpperCase() + "&f]"
+					+ "[" + permissions.getConfig().getString("permissions.titles.names." + curTitle + ".color") + curTitle.toUpperCase() + "&f] " 
+					+ curName);
+    		break;
+    	case 2:
+    		newName = ChatColor.translateAlternateColorCodes('&', "[" + chatConfig.getConfig().getString("chatModes." + curMode + ".color") + curMode.toUpperCase() + "&f]"
+					+ "[" + permissions.getConfig().getString("permissions.titles.names." + curTitle + ".color") + curTitle.toUpperCase() + "&f] " 
+					+ curName);
+    	}
+
+		receiver.setDisplayName(newName);
     }
     
     private void traverseParents(Player player, ArrayList<String> perms, String titleName) {
@@ -220,7 +282,7 @@ public class Main extends JavaPlugin implements Listener {
     	// Check users permissions
     	
     	// Fetch player title from config file
-    	String playerTitle = permissions.getConfig().getString("players." + player.getUniqueId() + ".title");
+    	String playerTitle = playerInfo.getConfig().getString("players." + player.getUniqueId() + ".title");
     	
     	ArrayList<String> playerPerms = new ArrayList<String>();
     	traverseParents(player, playerPerms, playerTitle);
@@ -247,7 +309,7 @@ public class Main extends JavaPlugin implements Listener {
     	if (player.isOp())
     		return true;
     	// Fetch player title from config file
-    	String playerTitle = permissions.getConfig().getString("players." + player.getUniqueId() + ".title");
+    	String playerTitle = playerInfo.getConfig().getString("players." + player.getUniqueId() + ".title");
     	
     	ArrayList<String> playerPerms = new ArrayList<String>();
     	traverseParents(player, playerPerms, playerTitle);
@@ -257,31 +319,29 @@ public class Main extends JavaPlugin implements Listener {
     	return true;
     }
 
-    public boolean onCommand(CommandSender sender, Command cmd, String label, String[] argv) {
-        if (argv.length == 0) {
-        	sender.sendMessage("Invalid use of command");
-        	return true;
-        }
-        
+    public boolean onCommand(CommandSender sender, Command cmd, String label, String[] argv) {        
         // Check if player
     	if (sender instanceof Player) {
     		// Cast sender to player
     		Player player = (Player) sender;
-    		
-    		// Check permissions of player
-    		if (!checkPermissions(player, label, argv[0].toLowerCase())) {
-    			player.sendMessage(ChatColor.RED + "You do not have permissions to use this command.\n If you believe this is a mistake contact a server administrator");
-    			return true;
+    			
+    		String command = "";
+    		if (argv.length > 0) {
+    			// Check permissions of player
+        		if (!checkPermissions(player, label, argv[0].toLowerCase())) {
+        			player.sendMessage(ChatColor.RED + "You do not have permissions to use this command.\n If you believe this is a mistake contact a server administrator");
+        			return true;
+        		}
+        		
+        		command = argv[0].toLowerCase();
     		}
-    		
-    		String command = argv[0].toLowerCase();
-    		
+
     		/* 
     		 * Checks general functions, if not match
     		 * it will check special functions for given label
     		 */
     		
-    		switch (command) {
+			switch (command) {
     		case "help":
     			if (argv.length == 1) {
     				// titleName - user, admin
@@ -336,6 +396,18 @@ public class Main extends JavaPlugin implements Listener {
 	        		player.sendMessage("This feature is not yet implemented");
 	        		break;
 	        	
+	        	case "region":
+	        	case "r":
+	        	case "all":
+	        	case "a":
+	        	case "shout":
+	        	case "s":
+	        	case "whisper":
+	        	case "w":
+	        	case "group":
+	        	case "g":
+	        	case "local":
+	        	case "l":
 	        	case "chat":
 	        		chatCommands.commandHandler(player, label, argv);
 	        		player.sendMessage("This feature is not yet implemented");

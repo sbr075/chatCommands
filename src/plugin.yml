@@ -11,5 +11,6 @@ commands:
     description: Use /mod help to see command list
   chat:
     description: Use /chat help to see command list
+    aliases: [region, r, all, a, shout, s, whisper, w, group, g, local, l]
   title:
     description: Use /title help to see command list

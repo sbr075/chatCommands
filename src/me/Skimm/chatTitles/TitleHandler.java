@@ -127,14 +127,10 @@ public class TitleHandler {
 
 					// Change display name for all active title users to match new color
 					for (String uuid : plugin.permissions.getConfig().getConfigurationSection("players").getKeys(false)) {
-						title = plugin.permissions.getConfig().getConfigurationSection("players." + uuid);
+						title = plugin.playerInfo.getConfig().getConfigurationSection("players." + uuid);
 						if (title.getString("title").equalsIgnoreCase(name)) {
-							
 							receiver = Bukkit.getPlayer(UUID.fromString(uuid));
-							String curName = player.getDisplayName().substring(name.length() + 7, receiver.getDisplayName().length());
-							
-							String newTitle = ChatColor.translateAlternateColorCodes('&', "[" + plugin.permissions.getConfig().getString("permissions.titles.names." + name + ".color") + name.toUpperCase() + "&f] " + curName);
-							receiver.setDisplayName(newTitle);
+							plugin.updateDisplayName(receiver, 0, name);
 						}
 					}
 					break;
@@ -181,7 +177,7 @@ public class TitleHandler {
 				args[0] = "give";
 				
 				for (String uuid : plugin.permissions.getConfig().getConfigurationSection("players").getKeys(false)) {
-					title = plugin.permissions.getConfig().getConfigurationSection("players." + uuid);
+					title = plugin.playerInfo.getConfig().getConfigurationSection("players." + uuid);
 					if (title.getString("title").equalsIgnoreCase(name)) {
 
 						receiver =  Bukkit.getPlayer(UUID.fromString(uuid));
@@ -197,6 +193,7 @@ public class TitleHandler {
 				plugin.permissions.getConfig().getConfigurationSection("permissions.titles").set(name, null);
 				plugin.permissions.getConfig().getConfigurationSection("permissions.titles.names").set(name, null);
 				plugin.permissions.saveConfig();
+				plugin.playerInfo.saveConfig();
 			}
 			else if (argv.length == 3) { // title remove <name> <perm>, remove permission from title
 				perm = argv[2];
@@ -230,7 +227,6 @@ public class TitleHandler {
 				
 		    	if (argv.length >= 3) {
 		    		try {
-		    			
 		    			receiver = player.getServer().getPlayer(argv[1]);
 		    		}
 		    		catch (Exception e) {
@@ -245,20 +241,20 @@ public class TitleHandler {
 				}
 				
 				
-				curTitle = plugin.permissions.getConfig().getString("players." + receiver.getUniqueId() + ".title");
+				curTitle = plugin.playerInfo.getConfig().getString("players." + receiver.getUniqueId() + ".title");
 				if (curTitle.equalsIgnoreCase(name)) {
 					player.sendMessage(ChatColor.RED + "[ERROR]:" + ChatColor.WHITE + " Player '" + player.getName() + "' already has the speicifed title");
 					return;
 				}
 				
-				curName = player.getDisplayName().substring(curTitle.length() + 7, player.getDisplayName().length());
-				newTitle = ChatColor.translateAlternateColorCodes('&', "[" + plugin.permissions.getConfig().getString("permissions.titles.names." + name + ".color") + name.toUpperCase() + "&f] " + curName);
-				player.setDisplayName(newTitle);
+				plugin.updateDisplayName(receiver, 0, name);
 				
 				plugin.permissions.getConfig().set("permissions.titles.names." + curTitle + ".uses", plugin.permissions.getConfig().getInt("permissions.titles.names." + curTitle + ".uses") - 1);
 				plugin.permissions.getConfig().set("permissions.titles.names." + name + ".uses", plugin.permissions.getConfig().getInt("permissions.titles.names." + name + ".uses") + 1);
-				plugin.permissions.getConfig().getConfigurationSection("players." + receiver.getUniqueId()).set("title", name);
 				plugin.permissions.saveConfig();
+				
+				plugin.playerInfo.getConfig().getConfigurationSection("players." + receiver.getUniqueId()).set("title", name);
+				plugin.playerInfo.saveConfig();
 			}
 			else {
     			player.sendMessage(ChatColor.RED + "Invalid use of command. Type /title help for more information");
@@ -307,7 +303,7 @@ public class TitleHandler {
 				else {
 					// Get receiver
 					receiver = player.getServer().getPlayer(argv[1]);
-					player.sendMessage("Player '" + receiver.getDisplayName() + "' has title: " + plugin.permissions.getConfig().getString("players." + receiver.getUniqueId() + ".title"));
+					player.sendMessage("Player '" + receiver.getDisplayName() + "' has title: " + plugin.playerInfo.getConfig().getString("players." + receiver.getUniqueId() + ".title"));
 				}
 			}
 			else {

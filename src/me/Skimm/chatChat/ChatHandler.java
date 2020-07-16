@@ -1,45 +1,68 @@
 package me.Skimm.chatChat;
 
+import org.bukkit.Bukkit;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 
 import me.Skimm.chatCommands.*;
 import net.md_5.bungee.api.ChatColor;
 
-public class ChatHandler {
-	private Main main;
+public class ChatHandler  {
+	private Main plugin;
+	ConfigurationSection section;
 	
 	public ChatHandler(Main plugin) {
-		this.main = plugin;
+		this.plugin = plugin;
 	}
+    
+    private boolean updateMode(Player player, String mode) {
+    	try {
+			if (section.getString(".chat.mode").equalsIgnoreCase(mode))
+				player.sendMessage("[" + ChatColor.RED + "WARNING" + ChatColor.WHITE + "] You're already in specified mode");
+
+			plugin.updateDisplayName(player, 1, mode);
+
+			plugin.playerInfo.getConfig().set("players." + player.getUniqueId().toString() + ".chat.mode", mode);
+			plugin.playerInfo.saveConfig();
+		}
+		catch (IllegalArgumentException e) {
+			player.sendMessage("[" + ChatColor.RED + "ERROR" + ChatColor.WHITE + "] Invalid chat mode");
+			return false;
+		}
+    	
+    	return true;
+    }
+    
+    public String stripName(Player player) {
+    	String curName, curTitle, curMode;
+    	curTitle = plugin.playerInfo.getConfig().getString("players." + player.getUniqueId() + ".title").toLowerCase();
+    	curMode = plugin.playerInfo.getConfig().getString("players." + player.getUniqueId() + ".chat.mode").toLowerCase();
+    	
+    	// [&fMODE&f][&fTITLE&f] <NAME>
+    	// Remove title and chat mode text to get normal name
+    	try {
+    		curName = player.getDisplayName().substring(curTitle.length() + curMode.length() + 13, player.getDisplayName().length());
+    	}
+    	catch (StringIndexOutOfBoundsException e) {
+    		curName = player.getDisplayName();
+    	}
+    	
+    	return curName;
+    }
 	
 	public void commandHandler(Player player, String label, String argv[]) {
 		// Save command to string
-		String command, type;
-		if (argv.length < 2) {
-			player.sendMessage(ChatColor.RED + "Invalid use of command. Type /chat help for more information");
+		String command = "", type = "", msg = "";
+		if (argv.length >= 2) {
+			command = argv[0].toLowerCase();
+			type = argv[1].toLowerCase();
 			return;
 		}
 		
-		command = argv[0].toLowerCase();
-		type = argv[1].toLowerCase();
+		
+		section = plugin.playerInfo.getConfig().getConfigurationSection("players." + player.getUniqueId().toString());
 		
 		switch(command) {
-		case "mode": // /chat mode <new mode>
-			/*
-			 * Global, Shout, Whisper, Party, Group, Local
-			 * Global - White
-			 * Shout - Yellow/Gold
-			 * Whisper - Purple
-			 * Party - Blue
-			 * Group - Green
-			 * Local - White
-			 * 
-			 * Checks
-			 * - If mode exists
-			 * - If player is already in specified mode (DO NOTHING, just inform)
-			 */
-			break;
-			
 		case "list": // /chat list <modes/groups>
 			/*
 			 * List all available chat modes
@@ -326,11 +349,138 @@ public class ChatHandler {
 				
 			default:
 				player.sendMessage(ChatColor.RED + "Invalid use of command. Type /chat help for more information");
-				break;
 			}
 			break;
 			
 		default:
+			switch (label) {
+			/*
+			 * Region, all, Shout, Whisper, Party, Group, Local
+			 * Region - White, Overworld, Nether, The End
+			 * All - White, Entire server
+			 * Shout - Yellow/Gold, Everyone within 1000 blocks
+			 * Whisper - Purple, 
+			 * Party - Blue
+			 * Group - Green
+			 * Local - White
+			 * 
+			 * Checks
+			 * - If mode exists
+			 * - If player is already in specified mode (DO NOTHING, just inform)
+			 */	
+			case "all":
+				if (!updateMode(player, label)) 
+					break;
+				
+				if (argv.length == 0)
+					break;
+			case "a": // /a <msg>
+				if (argv.length >= 2) {
+					for (int i = 0; i < argv.length; ++i)
+						msg += argv[i] + " ";
+
+					// Get list of all online players
+					for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
+						onlinePlayer.sendMessage(player.getDisplayName() + ":" + msg);
+					}
+				}
+				else {
+					player.sendMessage(ChatColor.RED + "Invalid use of command. Type /chat help for more information");
+				}
+				break;
+			
+			case "region":
+				if (!updateMode(player, label)) 
+					break;
+				
+				if (argv.length == 0)
+					break;
+			case "r": // /r <msg>
+				if (argv.length >= 2) {
+					for (int i = 0; i < argv.length; ++i)
+						msg += argv[i] + " ";
+					
+					for (Player regionPlayer: Bukkit.getOnlinePlayers()) {
+						// If inside same region (world)
+						if (regionPlayer.getWorld() == player.getWorld())
+							regionPlayer.sendMessage(player.getDisplayName() + ":" + msg);
+					}
+				}
+				else {
+					player.sendMessage(ChatColor.RED + "Invalid use of command. Type /chat help for more information");
+				}
+				break;
+			
+			case "shout":
+				if (!updateMode(player, label)) 
+					break;
+				
+				if (argv.length == 0)
+					break;
+			case "s": // /s <msg>
+				if (argv.length >= 1) {
+					for (int i = 0; i < argv.length; ++i)
+						msg += argv[i] + " ";
+					
+					for (Player shoutPlayer : Bukkit.getOnlinePlayers()) {
+						if (shoutPlayer.getLocation().distance(player.getLocation()) < plugin.chatConfig.getConfig().getInt("general.shoutdistance"))
+							shoutPlayer.sendMessage(player.getDisplayName() + ":" + msg);				
+					}
+				}
+				else {
+					player.sendMessage(ChatColor.RED + "Invalid use of command. Type /chat help for more information");
+				}
+				break;
+			
+			case "whisper": 
+				if (!updateMode(player, label)) 
+					break;
+				
+				if (argv.length == 0) {
+					if (plugin.playerInfo.getConfig().getString("players." + player.getUniqueId().toString() + ".chat.lastsent").isEmpty()) {
+						player.sendMessage("[" + ChatColor.RED + "ERROR" + ChatColor.WHITE + "] Found no last recipient");
+					}
+				}
+					break;
+			case "w": // /w <player> <msg>			
+				if (argv.length >= 2) {
+					if (player.getServer().getPlayer(argv[0]) == null) {
+						player.sendMessage("[" + ChatColor.RED + "ERROR" + ChatColor.WHITE + "] Player '" + argv[0] + "' doesn't exist or is offline");
+						break;
+					}
+					
+					Player receiver = player.getServer().getPlayer(argv[0]);
+
+					for (int i = 1; i < argv.length; ++i)
+						msg += argv[i] + " ";
+					
+					receiver.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.chatConfig.getConfig().getString("chatModes.whisper.color") + stripName(player) + " whispers to you: " + msg));
+				
+					plugin.playerInfo.getConfig().set("players." + player.getUniqueId() + ".chat.lastsent", receiver.getUniqueId().toString());
+					plugin.playerInfo.saveConfig();
+				}
+				else {
+					player.sendMessage(ChatColor.RED + "Invalid use of command. Type /chat help for more information");
+				}
+				break;
+				
+			case "g":
+				for (int i = 0; i < argv.length; ++i)
+					msg += argv[i] + " ";
+				break;
+				
+			case "p":
+				for (int i = 0; i < argv.length; ++i)
+					msg += argv[i] + " ";
+				break;
+				
+			case "l":
+				for (int i = 0; i < argv.length; ++i)
+					msg += argv[i] + " ";
+				break;
+			default:
+				player.sendMessage(ChatColor.RED + "Invalid use of command. Type /chat help for more information");
+			}
 			break;
 		}
 	}
