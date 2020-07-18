@@ -222,7 +222,7 @@ public class TitleHandler {
 			
 		case "give":
 			if (argv.length == 3) { // /title give <player> <title>, give player a title
-				String curTitle, curName, newTitle;
+				String curTitle;
 				name = argv[2].toLowerCase();
 				
 		    	if (argv.length >= 3) {

@@ -13,7 +13,7 @@ import org.bukkit.scheduler.BukkitTask;
 import me.Skimm.chatCommands.*;
 
 public class BroadcastHandler {
-	private Main main;
+	private Main plugin;
 	private BroadcastScheduler broadcastScheduler;
 	
 	SimpleDateFormat format = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
@@ -21,14 +21,14 @@ public class BroadcastHandler {
 	String msg = "";
 	
 	public BroadcastHandler(Main plugin) {
-		this.main = plugin;
+		this.plugin = plugin;
 	}
 
 	public void commandHandler(Player player, String label, String[] argv) {
 		// Save command to string
 		String command = argv[0].toLowerCase();
 		
-		broadcastScheduler = new BroadcastScheduler(this.main, player, argv);
+		broadcastScheduler = new BroadcastScheduler(this.plugin, player, argv);
 		
 		switch(command) {
 		case "send":
@@ -45,7 +45,7 @@ public class BroadcastHandler {
 			break;
 			
 		case "add": // /broadcast add <name> <interval> <runtime> <message>
-			if (main.broadcast.getConfig().getInt("broadcasts.current_broadcasts") >= main.broadcast.getConfig().getInt("broadcasts.max_broadcasts")) {
+			if (plugin.config.getConfig().getInt("general.broadcasts.current_broadcasts") >= plugin.config.getConfig().getInt("general.broadcasts.max_broadcasts")) {
 				player.sendMessage(ChatColor.RED + "[LIMIT REACHED]" + ChatColor.WHITE + " Can't add more broadcasts, try removing some existing broadcasts");
 				break;
 			}
@@ -60,13 +60,13 @@ public class BroadcastHandler {
 			 */
 			if (argv.length >= 4) {
 				// Check if broadcast already exists
-				if (main.broadcast.getConfig().contains("broadcasts." + argv[1])) {
+				if (plugin.config.getConfig().contains("general.broadcasts." + argv[1])) {
 					player.sendMessage(ChatColor.RED + "[ERROR]:" + ChatColor.WHITE + " Broadcast '" + argv[1] + "' already exists!");
 					return;
 				}
 				
 				// Calculate specified delay and check it against minimum delay allowed
-				int set_delay, min_delay = main.broadcast.getConfig().getInt("broadcasts.min_delay");
+				int set_delay, min_delay = plugin.config.getConfig().getInt("general.broadcasts.min_delay");
 				set_delay = broadcastScheduler.convertFromTimeformat(player, argv[2], 20);
 				
 				if (set_delay < min_delay) {
@@ -76,7 +76,7 @@ public class BroadcastHandler {
 
 				// Create task
 				@SuppressWarnings("unused")
-				BukkitTask task = broadcastScheduler.runTaskTimer(this.main, 0, set_delay);
+				BukkitTask task = broadcastScheduler.runTaskTimer(this.plugin, 0, set_delay);
 			}
 			else {
     			player.sendMessage(ChatColor.RED + "Invalid use of command. Type /broadcast help for more information");
@@ -86,7 +86,7 @@ public class BroadcastHandler {
 		case "edit": // /broadcast edit <name> <add runtime/message> <new value>
 			if (argv.length >= 4 && argv[2].toLowerCase().equalsIgnoreCase("message")) {
 				// Check if exists
-				if (!main.broadcast.getConfig().contains("broadcasts." + argv[1])) {
+				if (!plugin.config.getConfig().contains("general.broadcasts." + argv[1])) {
 					player.sendMessage(ChatColor.RED + "[ERROR]:" + ChatColor.WHITE + " Broadcast '" + argv[1] + "' doesn't exist");
 					break;
 				}
@@ -98,14 +98,14 @@ public class BroadcastHandler {
 				}
 				
 				// Update listing
-				ConfigurationSection updateBroadcast = main.broadcast.getConfig().getConfigurationSection("broadcasts." + argv[1]);
+				ConfigurationSection updateBroadcast = plugin.config.getConfig().getConfigurationSection("general.broadcasts." + argv[1]);
 				updateBroadcast.set("msg", msg);
-				main.broadcast.saveConfig();
+				plugin.config.saveConfig();
 			}
 			
 			else if (argv.length == 5 && argv[2].toLowerCase().equalsIgnoreCase("add") && argv[3].toLowerCase().equalsIgnoreCase("runtime")) {
 				// Check if listing exists
-				if (!main.broadcast.getConfig().contains("broadcasts." + argv[1])) {
+				if (!plugin.config.getConfig().contains("general.broadcasts." + argv[1])) {
 					player.sendMessage(ChatColor.RED + "[ERROR]:" + ChatColor.WHITE + " Broadcast '" + argv[1] + "' doesn't exist");
 					break;
 				}
@@ -119,7 +119,7 @@ public class BroadcastHandler {
 				
 				// Get current endtime
 				try {
-					endTime = format.parse(main.broadcast.getConfig().getString("broadcasts." + argv[1] + ".end_time"));
+					endTime = format.parse(plugin.config.getConfig().getString("general.broadcasts." + argv[1] + ".end_time"));
 				} catch (ParseException e) {
 					e.printStackTrace();
 				}
@@ -133,9 +133,9 @@ public class BroadcastHandler {
 				}
 				
 				// Update listing
-				ConfigurationSection updateBroadcast = main.broadcast.getConfig().getConfigurationSection("broadcasts." + argv[1]);
+				ConfigurationSection updateBroadcast = plugin.config.getConfig().getConfigurationSection("general.broadcasts." + argv[1]);
 				updateBroadcast.set("end_time", format.format(newTime));
-				main.broadcast.saveConfig();
+				plugin.config.saveConfig();
 			}
 			else {
     			player.sendMessage(ChatColor.RED + "Invalid use of command. Type /broadcast help for more information");
@@ -154,7 +154,7 @@ public class BroadcastHandler {
 		case "list":  // /broadcast list
 			if (argv.length == 1) {
 				player.sendMessage(ChatColor.DARK_AQUA + "Broadcast list");
-				for (String key1 : main.broadcast.getConfig().getConfigurationSection("broadcasts").getKeys(false)) {
+				for (String key1 : plugin.config.getConfig().getConfigurationSection("general.broadcasts").getKeys(false)) {
 					if (key1.equalsIgnoreCase("min_delay") || key1.equalsIgnoreCase("max_broadcasts") || key1.equalsIgnoreCase("current_broadcasts"))
 						continue;
 
@@ -169,12 +169,12 @@ public class BroadcastHandler {
 		case "info":
 			if (argv.length == 2) {
 				// Check if listing exists
-				if (!main.broadcast.getConfig().contains("broadcasts." + argv[1])) {
+				if (!plugin.config.getConfig().contains("general.broadcasts." + argv[1])) {
 					player.sendMessage("Broadcast '" + argv[1] + "' doesn't exist");
 					return;
 				}
 				
-				ConfigurationSection info = main.broadcast.getConfig().getConfigurationSection("broadcasts." + argv[1]);
+				ConfigurationSection info = plugin.config.getConfig().getConfigurationSection("general.broadcasts." + argv[1]);
 				String creator, msg;
 				
 				// Fetch information

@@ -5,6 +5,7 @@ import org.bukkit.entity.Player;
 import me.Skimm.chatCommands.*;
 
 public class ModHandler {
+	@SuppressWarnings("unused")
 	private Main main;
 	
 	public ModHandler(Main plugin) {

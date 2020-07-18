@@ -10,9 +10,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -105,12 +103,13 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public class Main extends JavaPlugin implements Listener {
 	// All config files
-	public ConfigManager emote;
 	public ConfigManager permissions;
 	public ConfigManager commands;
-	public ConfigManager broadcast;
 	public ConfigManager playerInfo;
-	public ConfigManager chatConfig;
+	public ConfigManager config;
+	
+	public ConfigManager emote;
+	public ConfigManager chat;
 	
 	// All feature packages
 	private EmoteHandler emoteCommands;
@@ -132,9 +131,9 @@ public class Main extends JavaPlugin implements Listener {
     	this.emote = new ConfigManager(this, "emotes.yml");
     	this.permissions = new ConfigManager(this, "permissions.yml");
     	this.commands = new ConfigManager(this, "commands.yml");
-    	this.broadcast = new ConfigManager(this, "broadcast.yml");
     	this.playerInfo = new ConfigManager(this, "playerinfo.yml");
-    	this.chatConfig = new ConfigManager(this, "chatconfig.yml");
+    	this.config = new ConfigManager(this, "config.yml");
+    	this.chat = new ConfigManager(this, "chat.yml");
 
     	getServer().getPluginManager().registerEvents(this, this);
     }
@@ -146,27 +145,19 @@ public class Main extends JavaPlugin implements Listener {
     
 	// Change chat format from <name> text to name: text
     @EventHandler
-    public void onChat(AsyncPlayerChatEvent e) {
+    public void onChat(AsyncPlayerChatEvent event) {
+    	Player player = event.getPlayer();
     	String curMode;
-    	curMode = playerInfo.getConfig().getString("players." + e.getPlayer().getUniqueId().toString() + ".chat.mode");
+    	curMode = playerInfo.getConfig().getString("players." + player.getUniqueId().toString() + ".chat.mode");
+    	event.setCancelled(true); // Cancel event
     	
-    	e.setFormat("%s: %s"); 
-    	
-    	e.getPlayer().sendMessage("curmode: " + curMode);
-    	// Handle whispers
-    	if (curMode.equalsIgnoreCase("whisper")) {
-    		e.setCancelled(true); // Cancel event
-
-    		if (Bukkit.getServer().getPlayer(UUID.fromString(playerInfo.getConfig().getString("players." + e.getPlayer().getUniqueId().toString() + ".chat.lastsent"))) != null) {
-    			Player receiver = Bukkit.getServer().getPlayer(UUID.fromString(playerInfo.getConfig().getString("players." + e.getPlayer().getUniqueId().toString() + ".chat.lastsent")));
-    			receiver.sendMessage(ChatColor.translateAlternateColorCodes('&', chatConfig.getConfig().getString("chatModes.whisper.color") + chatCommands.stripName(e.getPlayer()) + " whispers to you: " + e.getMessage()));
-    		}
-    		else {
-    			e.getPlayer().sendMessage("Player is not online");
-    		}
-    	}
+    	chatCommands.commandHandler(player, curMode, event.getMessage().split(" "));
     }
     
+    /*
+     * If in group, send group MOTD
+     * Notify all online group members player joined
+     */
     // When player joins
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
@@ -211,9 +202,10 @@ public class Main extends JavaPlugin implements Listener {
     }
     
     public void updateDisplayName(Player receiver, int option, String newVal) {
-    	String curName, curTitle, curMode, newName = "";
+    	String curName, curTitle, curMode, titleColor, modeColor, newName = "";
     	curTitle = playerInfo.getConfig().getString("players." + receiver.getUniqueId() + ".title").toLowerCase();
     	curMode = playerInfo.getConfig().getString("players." + receiver.getUniqueId() + ".chat.mode").toLowerCase();
+    	
     	
     	// [&fMODE&f][&fTITLE&f] <NAME>
     	// Remove title and chat mode text to get normal name
@@ -231,17 +223,33 @@ public class Main extends JavaPlugin implements Listener {
     	 */
     	switch(option) {
     	case 0:
-    		newName = ChatColor.translateAlternateColorCodes('&', "[" + chatConfig.getConfig().getString("chatModes." + curMode + ".color") + curMode.toUpperCase() + "&f]"
-					+ "[" + permissions.getConfig().getString("permissions.titles.names." + newVal + ".color") + newVal.toUpperCase() + "&f] " 
+    		titleColor = permissions.getConfig().getString("permissions.titles.names." + newVal + ".color");
+    		if (!titleColor.matches("^[&][A-Fa-f0-9]+$") || !(titleColor.length() == 2))
+    			titleColor = "&f";
+    		
+    		newName = ChatColor.translateAlternateColorCodes('&', "[" + config.getConfig().getString("general.chat.chatModes." + curMode + ".color") + curMode.toUpperCase() + "&f]"
+					+ "[" + titleColor + newVal.toUpperCase() + "&f] " 
 					+ curName);
     		break;
     	case 1:
-    		newName = ChatColor.translateAlternateColorCodes('&', "[" + chatConfig.getConfig().getString("chatModes." + newVal + ".color") + newVal.toUpperCase() + "&f]"
+    		modeColor = config.getConfig().getString("general.chat.chatModes." + newVal + ".color");
+    		if (!modeColor.matches("^[&][A-Fa-f0-9]+$") || !(modeColor.length() == 2))
+    			modeColor = "&f";
+    		
+    		newName = ChatColor.translateAlternateColorCodes('&', "[" + modeColor + newVal.toUpperCase() + "&f]"
 					+ "[" + permissions.getConfig().getString("permissions.titles.names." + curTitle + ".color") + curTitle.toUpperCase() + "&f] " 
 					+ curName);
     		break;
     	case 2:
-    		newName = ChatColor.translateAlternateColorCodes('&', "[" + chatConfig.getConfig().getString("chatModes." + curMode + ".color") + curMode.toUpperCase() + "&f]"
+    		modeColor = config.getConfig().getString("general.chat.chatModes." + newVal + ".color");
+    		if (!modeColor.matches("^[&][A-Fa-f0-9]+$") || !(modeColor.length() == 2))
+    			modeColor = "&f";
+    		
+    		titleColor = permissions.getConfig().getString("permissions.titles.names." + newVal + ".color");
+    		if (!titleColor.matches("^[&][A-Fa-f0-9]+$") || !(titleColor.length() == 2))
+    			titleColor = "&f";
+    		
+    		newName = ChatColor.translateAlternateColorCodes('&', "[" + config.getConfig().getString("general.chat.chatModes." + curMode + ".color") + curMode.toUpperCase() + "&f]"
 					+ "[" + permissions.getConfig().getString("permissions.titles.names." + curTitle + ".color") + curTitle.toUpperCase() + "&f] " 
 					+ curName);
     	}

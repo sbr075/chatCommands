@@ -62,29 +62,29 @@ public class BroadcastScheduler extends BukkitRunnable {
 	// Remove broadcast listing from list
 	public void removeListing(String name) {
 		// Check if broadcast exists
-		if (!plugin.broadcast.getConfig().contains("broadcasts." + name)) {
+		if (!plugin.config.getConfig().contains("general.broadcasts." + name)) {
 			player.sendMessage(ChatColor.RED + "[ERROR]:" + ChatColor.WHITE + " Broadcast '" + name + "' doesn't exist");
 			return;
 		}
 		
 		// Update broadcast amount, set listing to null and save
-		broadcast = plugin.broadcast.getConfig().getConfigurationSection("broadcasts");
+		broadcast = plugin.config.getConfig().getConfigurationSection("general.broadcasts");
 		broadcast.set("current_broadcasts", broadcast.getInt("current_broadcasts") - 1);
 		
 		Bukkit.getScheduler().cancelTask(broadcast.getInt(name + ".taskID"));
 
-		plugin.broadcast.getConfig().set("broadcasts." + name, null);
-		plugin.broadcast.saveConfig();
+		plugin.config.getConfig().set("general.broadcasts." + name, null);
+		plugin.config.saveConfig();
 		
 		
 	}
 	
 	@Override
 	public void run() {
-		broadcast = plugin.broadcast.getConfig().getConfigurationSection("broadcasts");
+		broadcast = plugin.config.getConfig().getConfigurationSection("general.broadcasts");
 		
 		// First time setup
-		if (!plugin.broadcast.getConfig().contains("broadcasts." + argv[1])) {
+		if (!plugin.config.getConfig().contains("general.broadcasts." + argv[1])) {
 			int duration = 0;
 			currentTime = new Date();
 
@@ -111,7 +111,7 @@ public class BroadcastScheduler extends BukkitRunnable {
 			broadcast.set("current_broadcasts", broadcast.getInt("current_broadcasts") + 1);
 			
 			// Save config
-			plugin.broadcast.saveConfig();
+			plugin.config.saveConfig();
 			
 			// Inform player
 			player.sendMessage(ChatColor.GREEN + "[INFO]" + ChatColor.WHITE + " Successfully created broadcast");
@@ -139,7 +139,7 @@ public class BroadcastScheduler extends BukkitRunnable {
 		}
 
 		// Broadcast message
-		msg = plugin.broadcast.getConfig().getString("broadcasts." + argv[1] + ".msg");
+		msg = plugin.config.getConfig().getString("general.broadcasts." + argv[1] + ".msg");
 		Bukkit.getServer().broadcastMessage(ChatColor.RED + "[BROADCAST] " + ChatColor.WHITE + msg);
 	}
 }
