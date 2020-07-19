@@ -311,7 +311,7 @@ public class ChatHandler  {
 			}
 			break;
 			
-		case "leave":
+		case "leave": // /chat leave <group/party>
 			/*
 			 * Leave the current active group
 			 * If last in group it gets disbanded
@@ -319,6 +319,46 @@ public class ChatHandler  {
 
 			switch(type) {
 			case "group":
+				// Check if player is in a group
+				if (plugin.playerInfo.getConfig().contains("players." + player.getUniqueId().toString() + ".chat.group")) {
+					String groupName = plugin.playerInfo.getConfig().getString("players." + player.getUniqueId().toString() + ".chat.group");
+					String groupOwner = plugin.chat.getConfig().getString("groups." + groupName + ".ownerUUID");
+					
+					List<String> members = plugin.chat.getConfig().getStringList("groups." + groupName + ".members");
+					
+					// Player isn't group owner
+					if (!player.getUniqueId().toString().equalsIgnoreCase(groupOwner)) {
+						// Remove player from members
+						members.remove(player.getUniqueId().toString());
+						plugin.chat.getConfig().set("groups." + groupName + ".members", members);
+						
+						// Update player info
+						plugin.playerInfo.getConfig().set("players." + player.getUniqueId().toString() + ".chat.group", null);
+						
+						plugin.playerInfo.saveConfig();
+						plugin.chat.saveConfig();
+					}
+					// Player is group owner
+					else {
+						// Only owner left
+						if (members.size() == 1) {
+							// Remove group listing
+							plugin.chat.getConfig().set("groups." + groupName, null);
+							
+							// Update player info
+							plugin.playerInfo.getConfig().set("players." + player.getUniqueId().toString() + ".chat.group", null);
+							
+							plugin.playerInfo.saveConfig();
+							plugin.chat.saveConfig();
+						}
+						else {
+							player.sendMessage(ChatColor.RED + "There are still members left in the group");
+						}
+					}
+				}
+				else {
+					player.sendMessage(ChatColor.RED + "You're not in a group");
+				}
 				/*
 				 * Checks
 				 * - If command sender is in a group
@@ -333,6 +373,44 @@ public class ChatHandler  {
 				 * - If owner, group gets disbanded
 				 * - If member, just leave
 				 */
+				
+				// Check if player is in a party
+				if (plugin.playerInfo.getConfig().contains("players." + player.getUniqueId().toString() + ".chat.party")) {
+					// Check if player is party owner
+					String partyOwner = plugin.playerInfo.getConfig().getString("players." + player.getUniqueId().toString() + ".chat.party");
+					
+					List<String> members = plugin.chat.getConfig().getStringList("parties." + partyOwner + ".members");
+					
+					// Player is party owner
+					if (player.getUniqueId().toString().equalsIgnoreCase(partyOwner)) {
+						if (members.size() > 1) {
+							plugin.chat.getConfig().set("parties." + partyOwner, "parties." + members.get(1));
+						}
+						else {
+							plugin.chat.getConfig().set("parties." + partyOwner, null);
+						}
+						// Update player info
+						plugin.playerInfo.getConfig().set("players." + player.getUniqueId().toString() + ".chat.party", null);
+						
+						plugin.playerInfo.saveConfig();
+						plugin.chat.saveConfig();
+					}
+					// Player isn't party owner
+					else {
+						// Remove player from members
+						members.remove(player.getUniqueId().toString());
+						plugin.chat.getConfig().set("parties." + partyOwner + ".members", members);
+						
+						// Update player info
+						plugin.playerInfo.getConfig().set("players." + player.getUniqueId().toString() + ".chat.party", null);
+						
+						plugin.playerInfo.saveConfig();
+						plugin.chat.saveConfig();
+					}
+				}
+				else {
+					player.sendMessage(ChatColor.RED + "You're not in a party");
+				}
 				break;
 				
 			default:
@@ -347,6 +425,9 @@ public class ChatHandler  {
 			 * Owner can give any title (Even owner)
 			 * Title ideas:
 			 * - Owner, Moderator, Member
+			 * 
+			 * Party
+			 * - Append new party owner
 			 */
 			
 			switch(type) {
@@ -456,12 +537,16 @@ public class ChatHandler  {
 				if (argv.length >= 1) {
 					for (int i = 0; i < argv.length; ++i)
 						msg += argv[i] + " ";
+					
+					String curMode = plugin.playerInfo.getConfig().getString("players." + player.getUniqueId() + ".chat.mode").toLowerCase();
+			    	updateMode(player, "all");
 
 					// Get list of all online players
 					for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
 						msg = ChatColor.translateAlternateColorCodes('&', plugin.config.getConfig().getString("general.chat.chatModes.all.color") + msg);
 						onlinePlayer.sendMessage(player.getDisplayName() + ": " + msg);
 					}
+					updateMode(player, curMode);
 				}
 				else {
 					player.sendMessage(ChatColor.RED + "Invalid use of command. Type /chat help for more information");
@@ -479,6 +564,9 @@ public class ChatHandler  {
 					for (int i = 0; i < argv.length; ++i)
 						msg += argv[i] + " ";
 					
+					String curMode = plugin.playerInfo.getConfig().getString("players." + player.getUniqueId() + ".chat.mode").toLowerCase();
+			    	updateMode(player, "region");
+					
 					for (Player regionPlayer: Bukkit.getOnlinePlayers()) {
 						// If inside same region (world)
 						if (regionPlayer.getWorld() == player.getWorld()) {
@@ -487,6 +575,7 @@ public class ChatHandler  {
 					
 						}
 					}
+					updateMode(player, curMode);
 				}
 				else {
 					player.sendMessage(ChatColor.RED + "Invalid use of command. Type /chat help for more information");
@@ -504,12 +593,16 @@ public class ChatHandler  {
 					for (int i = 0; i < argv.length; ++i)
 						msg += argv[i] + " ";
 					
+					String curMode = plugin.playerInfo.getConfig().getString("players." + player.getUniqueId() + ".chat.mode").toLowerCase();
+			    	updateMode(player, "shout");
+					
 					for (Player shoutPlayer : Bukkit.getOnlinePlayers()) {
 						if (shoutPlayer.getLocation().distance(player.getLocation()) < plugin.config.getConfig().getInt("general.chat.shoutdistance")) {
 							msg = ChatColor.translateAlternateColorCodes('&', plugin.config.getConfig().getString("gnereal.chat.chatModes.shout.color") + msg);
 							shoutPlayer.sendMessage(player.getDisplayName() + ": " + msg);				
 						}
 					}
+					updateMode(player, curMode);
 				}
 				else {
 					player.sendMessage(ChatColor.RED + "Invalid use of command. Type /chat help for more information");
@@ -538,10 +631,15 @@ public class ChatHandler  {
 					for (int i = 1; i < argv.length; ++i)
 						msg += argv[i] + " ";
 					
+					String curMode = plugin.playerInfo.getConfig().getString("players." + player.getUniqueId() + ".chat.mode").toLowerCase();
+			    	updateMode(player, "whisper");
+					
 					receiver.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.config.getConfig().getString("general.chat.chatModes." + label + ".color") + stripName(player) + " whispers to you: " + msg));
 				
 					plugin.playerInfo.getConfig().set("players." + player.getUniqueId() + ".chat.lastsent", receiver.getUniqueId().toString());
 					plugin.playerInfo.saveConfig();
+					
+					updateMode(player, curMode);
 				}
 				else {
 					player.sendMessage(ChatColor.RED + "Invalid use of command. Type /chat help for more information");
@@ -549,6 +647,11 @@ public class ChatHandler  {
 				break;
 			
 			case "group":
+				if (!plugin.playerInfo.getConfig().contains("players." + player.getUniqueId().toString() + ".chat.group")) {
+					player.sendMessage("You're not in a group");
+					break;
+				}
+				
 				if (!updateMode(player, label)) 
 					break;
 				
@@ -556,8 +659,16 @@ public class ChatHandler  {
 					break;
 			case "g":
 				if (argv.length >= 1) {
+					if (!plugin.playerInfo.getConfig().contains("players." + player.getUniqueId().toString() + ".chat.group")) {
+						player.sendMessage("You're not in a group");
+						break;
+					}
+					
 					for (int i = 0; i < argv.length; ++i)
 						msg += argv[i] + " ";
+					
+					String curMode = plugin.playerInfo.getConfig().getString("players." + player.getUniqueId() + ".chat.mode").toLowerCase();
+			    	updateMode(player, "group");
 					
 					String groupName = plugin.playerInfo.getConfig().getString("players." + player.getUniqueId().toString() + ".chat.group");
 					List<String> groupMembers = plugin.chat.getConfig().getStringList("groups." + groupName + ".members");
@@ -573,6 +684,7 @@ public class ChatHandler  {
 						
 						groupMember.sendMessage(ChatColor.translateAlternateColorCodes('&', player.getDisplayName() + ": " + plugin.config.getConfig().getString("general.chat.chatModes.group.color") + msg));
 					}
+					updateMode(player, curMode);
 				}
 				else {
 					player.sendMessage(ChatColor.RED + "Invalid use of command. Type /chat help for more information");
@@ -580,6 +692,11 @@ public class ChatHandler  {
 				break;
 			
 			case "party":
+				if (!plugin.playerInfo.getConfig().contains("players." + player.getUniqueId().toString() + ".chat.party")) {
+					player.sendMessage("You're not in a party");
+					break;
+				}
+				
 				if (!updateMode(player, label)) 
 					break;
 				
@@ -587,11 +704,19 @@ public class ChatHandler  {
 					break;
 			case "p":
 				if (argv.length >= 1) {
+					if (!plugin.playerInfo.getConfig().contains("players." + player.getUniqueId().toString() + ".chat.party")) {
+						player.sendMessage("You're not in a party");
+						break;
+					}
+					
 					for (int i = 0; i < argv.length; ++i)
 						msg += argv[i] + " ";
 					
+					String curMode = plugin.playerInfo.getConfig().getString("players." + player.getUniqueId() + ".chat.mode").toLowerCase();
+			    	updateMode(player, "party");
+					
 					String partyOwner = plugin.playerInfo.getConfig().getString("players." + player.getUniqueId().toString() + ".chat.party");
-					List<String> partyMembers = plugin.chat.getConfig().getStringList("parties." + partyOwner);
+					List<String> partyMembers = plugin.chat.getConfig().getStringList("parties." + partyOwner + ".members");
 					
 					for (String memberUUID : partyMembers) {
 						Player partyMember = null;
@@ -604,6 +729,8 @@ public class ChatHandler  {
 						
 						partyMember.sendMessage(ChatColor.translateAlternateColorCodes('&', player.getDisplayName() + ": " + plugin.config.getConfig().getString("general.chat.chatModes.party.color") + msg));
 					}
+					
+					updateMode(player, curMode);
 				}
 				else {
 					player.sendMessage(ChatColor.RED + "Invalid use of command. Type /chat help for more information");
@@ -621,12 +748,16 @@ public class ChatHandler  {
 					for (int i = 0; i < argv.length; ++i)
 						msg += argv[i] + " ";
 					
+					String curMode = plugin.playerInfo.getConfig().getString("players." + player.getUniqueId() + ".chat.mode").toLowerCase();
+			    	updateMode(player, "local");
+					
 					for (Player localPlayer : Bukkit.getOnlinePlayers()) {
 						if (localPlayer.getLocation().distance(player.getLocation()) < plugin.config.getConfig().getInt("general.chat.shoutdistance")) {
 							msg = ChatColor.translateAlternateColorCodes('&', plugin.config.getConfig().getString("gnereal.chat.chatModes.local.color") + msg);
 							localPlayer.sendMessage(player.getDisplayName() + ": " + msg);				
 						}
 					}
+					updateMode(player, curMode);
 				}
 				else {
 					player.sendMessage(ChatColor.RED + "Invalid use of command. Type /chat help for more information");

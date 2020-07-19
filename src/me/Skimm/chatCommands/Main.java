@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
@@ -20,6 +21,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
 /*
@@ -162,6 +164,7 @@ public class Main extends JavaPlugin implements Listener {
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
     	Player player = event.getPlayer();
+    	event.setJoinMessage("");
     	
     	// Check player titles
     	// If op give Admin which gives all trusted and user permissions + admin permissions
@@ -197,8 +200,90 @@ public class Main extends JavaPlugin implements Listener {
     		updateDisplayName(player, 2, null);
     	}
     	else {
-    		permissions.saveDefaultConfig();
+    		if (playerInfo.getConfig().contains("players." + player.getUniqueId().toString() + ".chat.group")) {
+    			String groupName = playerInfo.getConfig().getString("players." + player.getUniqueId().toString() + ".chat.group");
+				List<String> groupMembers = chat.getConfig().getStringList("groups." + groupName + ".members");
+				
+				// Send player group MOTD
+				player.sendMessage(ChatColor.GREEN + "Group MOTD: " + chat.getConfig().getString("groups." + groupName + ".MOTD"));
+				
+				// Notify all group members
+				for (String memberUUID : groupMembers) {
+					Player groupMember = null;
+					try {
+		    			groupMember = player.getServer().getPlayer(UUID.fromString(memberUUID));
+		    		}
+		    		catch (Exception e) {
+		    			continue;
+		    		}
+					
+					groupMember.sendMessage(ChatColor.translateAlternateColorCodes('&', config.getConfig().getString("general.chat.chatModes.group.color") + chatCommands.stripName(player) + " has joined the server!"));
+				}
+			}
     	}
+    }
+    
+    @EventHandler
+    public void onLeave(PlayerQuitEvent event) {
+    	Player player = event.getPlayer();
+    	
+    	playerInfo.getConfig().set("players." + player.getUniqueId().toString() + ".chat.mode", "all");
+    	playerInfo.saveConfig();
+    	
+    	// If player belongs to group
+    	if (playerInfo.getConfig().contains("players." + player.getUniqueId().toString() + ".chat.group")) {
+			String groupName = playerInfo.getConfig().getString("players." + player.getUniqueId().toString() + ".chat.group");
+			List<String> groupMembers = chat.getConfig().getStringList("groups." + groupName + ".members");
+
+			// Notify all group members
+			for (String memberUUID : groupMembers) {
+				Player groupMember = null;
+				try {
+	    			groupMember = player.getServer().getPlayer(UUID.fromString(memberUUID));
+	    		}
+	    		catch (Exception e) {
+	    			continue;
+	    		}
+				
+				groupMember.sendMessage(ChatColor.translateAlternateColorCodes('&', config.getConfig().getString("general.chat.chatModes.group.color") + chatCommands.stripName(player) + " has left the server!"));
+			}
+		}
+    	
+    	// Already have this function
+    	if (playerInfo.getConfig().contains("players." + player.getUniqueId().toString() + ".chat.party")) {
+			// Check if player is party owner
+			String partyOwner = playerInfo.getConfig().getString("players." + player.getUniqueId().toString() + ".chat.party");
+			
+			List<String> members = chat.getConfig().getStringList("parties." + partyOwner + ".members");
+			
+			// Player is party owner
+			if (player.getUniqueId().toString().equalsIgnoreCase(partyOwner)) {
+				if (members.size() > 1) {
+					chat.getConfig().set("parties." + partyOwner, "parties." + members.get(1));
+				}
+				else {
+					chat.getConfig().set("parties." + partyOwner, null);
+				}
+				
+				// Update player info
+				playerInfo.getConfig().set("players." + player.getUniqueId().toString() + ".chat.party", null);
+				
+				playerInfo.saveConfig();
+				chat.saveConfig();
+			}
+			// Player isn't party owner
+			else {
+				// Remove player from members
+				members.remove(player.getUniqueId().toString());
+				chat.getConfig().set("parties." + partyOwner + ".members", members);
+				
+				// Update player info
+				playerInfo.getConfig().set("players." + player.getUniqueId().toString() + ".chat.party", null);
+				
+				playerInfo.saveConfig();
+				chat.saveConfig();
+			}
+		}
     }
     
     public void updateDisplayName(Player receiver, int option, String newVal) {
@@ -414,11 +499,12 @@ public class Main extends JavaPlugin implements Listener {
 	        	case "w":
 	        	case "group":
 	        	case "g":
+	        	case "party":
+	        	case "p":
 	        	case "local":
 	        	case "l":
 	        	case "chat":
 	        		chatCommands.commandHandler(player, label, argv);
-	        		player.sendMessage("This feature is not yet implemented");
 	        		break;
 	        	
 	        	case "title":
