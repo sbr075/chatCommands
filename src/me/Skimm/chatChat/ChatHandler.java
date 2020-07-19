@@ -13,10 +13,15 @@ import net.md_5.bungee.api.ChatColor;
 
 public class ChatHandler  {
 	private Main plugin;
-	ConfigurationSection section;
+	ConfigurationSection section, p, r;
+	ArrayList<String> titles = new ArrayList<String>();
 	
 	public ChatHandler(Main plugin) {
 		this.plugin = plugin;
+		
+		titles.add("owner");
+		titles.add("moderator");
+		titles.add("member");
 	}
     
     private boolean updateMode(Player player, String mode) {
@@ -52,7 +57,7 @@ public class ChatHandler  {
 	
 	public void commandHandler(Player player, String label, String argv[]) {
 		// Save command to string
-		String command = "", type = "", msg = "";
+		String command = "", type = "", msg = "", color = "&f";
 		if (argv.length >= 2 && label.equalsIgnoreCase("chat")) {
 			command = argv[0].toLowerCase();
 			type = argv[1].toLowerCase();
@@ -124,12 +129,16 @@ public class ChatHandler  {
 							ConfigurationSection newGroup = plugin.chat.getConfig().createSection("groups." + argv[2]);
 							newGroup.set("ownerUUID", player.getUniqueId().toString());
 							newGroup.set("name", argv[2]);
+							newGroup.set("description", "This is a default description");
 							newGroup.set("MOTD", "Welcome to " + argv[2]);
 							newGroup.set("policy", "closed");
 							
 							List<String> members = new ArrayList<String>();
 							members.add(player.getUniqueId().toString());
 							newGroup.set("members", members);
+							
+							List<String> requests = new ArrayList<String>();
+							newGroup.set("request", requests);
 							
 							// Update player info
 							ConfigurationSection playerInfo = plugin.playerInfo.getConfig().getConfigurationSection("players." + player.getUniqueId().toString() + ".chat");
@@ -282,33 +291,311 @@ public class ChatHandler  {
 			}
 			break;
 			
-		case "deny":
+		case "deny": // /chat deny <group/party> <player>
 			/*
 			 * Deny player invitation request
 			 */
 			
+			/*
+			 * Might be a bug if the player to be denied is offline
+			 * Need to look into this further
+			 */
+			
+			if (argv.length == 3) {
+				switch(type) {
+				case "group":
+					/*
+					 * Checks:
+					 * - If command sender has permissions to deny
+					 * - If player exists
+					 * - If player has requested
+					 */
+					
+					// Check if player is in a group
+					color = plugin.config.getConfig().getString("general.chat.chatModes.group.color");
+					p = plugin.playerInfo.getConfig().getConfigurationSection("players." + player.getUniqueId().toString() + ".chat");
+					if (p.contains("group")) {
+						String groupName = p.getString("group.title");
+						List<String> requests = plugin.chat.getConfig().getStringList("groups." + groupName + ".members");
+						
+						// Check if player has permission to deny requests
+						if (titles.indexOf(p.getString("group.title")) <= titles.indexOf("moderator")) {
+							Player requestPlayer = null;
+							try {
+								requestPlayer = player.getServer().getPlayer(argv[2]);
+				    		}
+				    		catch (Exception e) {
+				    			player.sendMessage("Invalid player");
+				    			break;
+				    		}
+							
+							if (requests.contains(requestPlayer.getUniqueId().toString())) {
+								requests.remove(requestPlayer.getUniqueId().toString());
+								plugin.chat.getConfig().set("groups." + groupName + ".requests", requests);
+								plugin.chat.saveConfig();
+								
+								requestPlayer.sendMessage(ChatColor.translateAlternateColorCodes('&', color + "Your group request has been denied"));
+							}
+							else {
+								player.sendMessage(ChatColor.RED + "Couldn't find specified player");
+							}
+						}
+						else {
+							player.sendMessage(ChatColor.RED + "You do not have the required permissions");
+						}
+					}
+					else {
+						player.sendMessage(ChatColor.RED + "You're not in a group");
+					}
+					break;
+					
+				case "party":
+					/*
+					 * Checks:
+					 * - If command sender is owner
+					 * - If player exists
+					 * - If player has requested
+					 */
+					// Check if player is in a group
+					color = plugin.config.getConfig().getString("general.chat.chatModes.party.color");
+					p = plugin.playerInfo.getConfig().getConfigurationSection("players." + player.getUniqueId().toString() + ".chat");
+					if (p.contains("party")) {
+						if (plugin.chat.getConfig().contains("parties." + player.getUniqueId())) {
+							List<String> requests = plugin.chat.getConfig().getStringList("parties." + player.getUniqueId().toString() + ".members");
+							
+							Player requestPlayer = null;
+							try {
+								requestPlayer = player.getServer().getPlayer(argv[2]);
+				    		}
+				    		catch (Exception e) {
+				    			player.sendMessage("Invalid player");
+				    			break;
+				    		}
+							
+							if (requests.contains(requestPlayer.getUniqueId().toString())) {
+								requests.remove(requestPlayer.getUniqueId().toString());
+								plugin.chat.getConfig().set("groups." + player.getUniqueId().toString() + ".requests", requests);
+								plugin.chat.saveConfig();
+								
+								requestPlayer.sendMessage(ChatColor.translateAlternateColorCodes('&', color + "Your party request has been denied"));
+							}
+							else {
+								player.sendMessage(ChatColor.RED + "Couldn't find specified player");
+							}
+						}
+						else {
+							player.sendMessage(ChatColor.RED + "You're not the party leader");
+						}
+					}
+					else {
+						player.sendMessage(ChatColor.RED + "You're not in a party");
+					}
+					break;
+					
+				default:
+					player.sendMessage(ChatColor.RED + "Invalid use of command. Type /chat help for more information");
+					break;
+				}
+			}
+			else {
+				player.sendMessage(ChatColor.RED + "Invalid use of command. Type /chat help for more information");
+			}
+			break;
+		
+		case "requests":
 			switch(type) {
 			case "group":
 				/*
-				 * Checks:
-				 * - If command sender has permissions to deny
-				 * - If player exists
-				 * - If player has requested
+				 * Checks
+				 * - If command sender has permissions to see list
 				 */
+				// Check if player is in a group
+				p = plugin.playerInfo.getConfig().getConfigurationSection("players." + player.getUniqueId().toString() + ".chat");
+				if (p.contains("group")) {
+					String groupName = p.getString("group.title");
+					List<String> requests = plugin.chat.getConfig().getStringList("groups." + groupName + ".requests");
+					
+					// Check if player has permission to give specified title
+					if (titles.indexOf(p.getString("group.title")) < titles.indexOf(argv[2].toLowerCase())) {
+						if (requests.size() > 0) {
+							player.sendMessage(ChatColor.AQUA + "Join requests for " + groupName);
+							for (String request : requests) {
+								player.sendMessage(ChatColor.DARK_AQUA + "- " + Bukkit.getServer().getPlayer(UUID.fromString(request)).getDisplayName());
+							}
+						}
+						else {
+							player.sendMessage(ChatColor.RED + "There are no current requests");
+						}
+					}
+					else {
+						player.sendMessage(ChatColor.RED + "You do not have the required permissions");
+					}
+				}
+				else {
+					player.sendMessage(ChatColor.RED + "You're not in a group");
+				}
 				break;
 				
 			case "party":
 				/*
-				 * Checks:
+				 * Checks
 				 * - If command sender is owner
-				 * - If player exists
-				 * - If player has requested
 				 */
+				
+				// Check if player is in a group
+				p = plugin.playerInfo.getConfig().getConfigurationSection("players." + player.getUniqueId().toString() + ".chat");
+				if (p.contains("party")) {
+					if (plugin.chat.getConfig().contains("parties." + player.getUniqueId())) {
+						List<String> requests = plugin.chat.getConfig().getStringList("parties." + player.getUniqueId().toString() + ".requests");
+						if (requests.size() > 0) {
+							player.sendMessage(ChatColor.AQUA + "Join requests for your party");
+							for (String request : requests) {
+								player.sendMessage(ChatColor.DARK_AQUA + "- " + Bukkit.getServer().getPlayer(UUID.fromString(request)).getDisplayName());
+							}
+						}
+						else {
+							player.sendMessage(ChatColor.RED + "There are no current requests");
+						}
+					}
+					else {
+						player.sendMessage(ChatColor.RED + "You're not the party leader");
+					}
+				}
+				else {
+					player.sendMessage(ChatColor.RED + "You're not in a party");
+				}
 				break;
 				
 			default:
 				player.sendMessage(ChatColor.RED + "Invalid use of command. Type /chat help for more information");
 				break;
+			}
+			break;
+			
+		case "join": // /chat join <group/party> <group name/player name>
+			/*
+			 * Ask to join group
+			 * If closed, need to be accepted
+			 * If open, join right away
+			 * 
+			 * Checks:
+			 * - If command sender is in a group
+			 */
+			
+			if (argv.length == 3) {
+				String name = argv[2];
+				
+				switch(type) {
+				case "group":
+					/*
+					 * Player request will be saved in a list where any mod or owner can
+					 * look at and accept at anytime
+					 * 
+					 * Checks
+					 * - If command sender is in a group
+					 * - If group exists
+					 * - If command sender has already requested an invite
+					 */
+					
+					color = plugin.config.getConfig().getString("general.chat.chatModes.group.color");
+					if (!plugin.playerInfo.getConfig().contains("players." + player.getUniqueId().toString() + ".chat.group")) {
+						if (plugin.chat.getConfig().contains("groups." + name)) {
+							String policy = plugin.chat.getConfig().getString("groups." + name + ".policy");
+							if (policy.equalsIgnoreCase("closed")) {
+								List<String> requests = plugin.chat.getConfig().getStringList("groups." + name + ".requests");
+								if (!requests.contains(player.getUniqueId().toString())) {
+									requests.add(player.getUniqueId().toString());
+									plugin.chat.getConfig().set("groups." + name + "requests", requests);
+									plugin.chat.saveConfig();
+									
+									player.sendMessage(ChatColor.translateAlternateColorCodes('&', color + "You've requested to join " + name));
+								}
+								else {
+									player.sendMessage(ChatColor.RED + "You've already requested to join this group");
+								}
+							}
+							else {
+								List<String> members = plugin.chat.getConfig().getStringList("groups." + name + ".members");
+								members.add(player.getUniqueId().toString());
+								plugin.chat.getConfig().set("groups." + name + ".members", members);
+								
+								plugin.playerInfo.getConfig().set("players." + player.getUniqueId().toString() + ".chat.group.name", name);
+								plugin.playerInfo.getConfig().set("players." + player.getUniqueId().toString() + ".chat.group.title", "member");
+								
+								plugin.playerInfo.saveConfig();
+								plugin.chat.saveConfig();
+								
+								player.sendMessage(ChatColor.translateAlternateColorCodes('&', color + "You've joined " + name));
+								
+								String[] args = {player.getDisplayName().toString(), "has", "joined", "the", "group"};
+								this.commandHandler(player, "g", args);
+							}
+						}
+						else {
+							player.sendMessage(ChatColor.RED + "Group doesn't exists");
+						}
+					}
+					else {
+						player.sendMessage(ChatColor.RED + "You're already in a group");
+					}
+					
+					break;
+					
+				case "party":
+					/*
+					 * Player request will go directly to party owner
+					 * Player request will timeout after 2 minutes if no response
+					 * 
+					 * Checks
+					 * - If command sender is in a party
+					 * - If party exists
+					 * - If command sender has already requested an invite
+					 */
+					Player partyMember = null;
+					try {
+		    			partyMember = player.getServer().getPlayer(argv[2]);
+		    		}
+		    		catch (Exception e) {
+		    			player.sendMessage("Invalid player");
+		    			break;
+		    		}
+					
+					if (!plugin.playerInfo.getConfig().contains("players." + player.getUniqueId().toString() + ".chat.party")) {
+						if (plugin.chat.getConfig().contains("parties." + partyMember.getUniqueId().toString())) {
+							if (plugin.chat.getConfig().getInt("parties." + partyMember.getUniqueId().toString() + ".count") > plugin.config.getConfig().getInt("general.chat.maxpartycap")) {
+								List<String> requests = plugin.chat.getConfig().getStringList("groups." + name + ".requests");
+								if (!requests.contains(player.getUniqueId().toString())) {
+									requests.add(player.getUniqueId().toString());
+									plugin.chat.getConfig().set("groups." + name + "requests", requests);
+									plugin.chat.saveConfig();
+									
+									color = plugin.config.getConfig().getString("general.chat.chatModes.party.color");
+									player.sendMessage(ChatColor.translateAlternateColorCodes('&', "You've requested to join " + partyMember.getDisplayName() +"'s party"));
+									partyMember.sendMessage(ChatColor.translateAlternateColorCodes('&', "Player " + player.getDisplayName() + " has requested to join your party"));	
+								}
+								else {
+									player.sendMessage(ChatColor.RED + "You've already requested to join this party");
+								}
+							}
+							else {
+								player.sendMessage(ChatColor.RED + "Party is full");
+							}
+						}
+						else {
+							player.sendMessage(ChatColor.RED + "Player either doesn't belong to a group or isn't the owner of it");
+						}
+					}
+					else {
+						player.sendMessage(ChatColor.RED + "You're already in a group");
+					}
+					break;
+					
+				default:
+					player.sendMessage(ChatColor.RED + "Invalid use of command. Type /chat help for more information");
+				}
+			}
+			else {
+				player.sendMessage(ChatColor.RED + "Invalid use of command. Type /chat help for more information");
 			}
 			break;
 			
@@ -441,15 +728,10 @@ public class ChatHandler  {
 				 */
 				if (argv.length == 4) {
 					// Check if player is in a group
-					ConfigurationSection p = plugin.playerInfo.getConfig().getConfigurationSection("players." + player.getUniqueId().toString() + ".chat");
+					p = plugin.playerInfo.getConfig().getConfigurationSection("players." + player.getUniqueId().toString() + ".chat");
 					if (p.contains("group")) {
 						String groupName = p.getString("group.title");
 						List<String> groupMembers = plugin.chat.getConfig().getStringList("groups." + groupName + ".members");
-						
-						ArrayList<String> titles = new ArrayList<String>();
-						titles.add("owner");
-						titles.add("moderator");
-						titles.add("member");
 						
 						// Check if player has permission to give specified title
 						if (titles.indexOf(p.getString("group.title")) < titles.indexOf(argv[2].toLowerCase())) {
@@ -464,8 +746,8 @@ public class ChatHandler  {
 							
 							// Check if member is a member
 							if (groupMembers.contains(groupMember.getUniqueId().toString())) {
-								ConfigurationSection r = plugin.playerInfo.getConfig().getConfigurationSection("players." + groupMember.getUniqueId().toString() + ".chat");
-								String color = plugin.config.getConfig().getString("general.chat.chatModes.group.color");
+								r = plugin.playerInfo.getConfig().getConfigurationSection("players." + groupMember.getUniqueId().toString() + ".chat");
+								color = plugin.config.getConfig().getString("general.chat.chatModes.group.color");
 								
 								// Check if player is owner
 								if (titles.indexOf(p.getString("group.title")) == 0) {
@@ -538,7 +820,7 @@ public class ChatHandler  {
 				    			break;
 				    		}
 							
-							String color = plugin.config.getConfig().getString("general.chat.chatModes.party.color");
+							color = plugin.config.getConfig().getString("general.chat.chatModes.party.color");
 							player.sendMessage(ChatColor.translateAlternateColorCodes('&', color + "Made " + partyMember.getDisplayName() + " party leader"));
 							partyMember.sendMessage(ChatColor.translateAlternateColorCodes('&', color + "You've been made party leader"));
 							
@@ -582,15 +864,68 @@ public class ChatHandler  {
 				 * - If edit option is valid
 				 */
 				if (argv.length >= 4) {
-					String option = argv[2].toLowerCase();
+					String option, groupName;
+					option = argv[2].toLowerCase();
+					
+					p = plugin.playerInfo.getConfig().getConfigurationSection("players." + player.getUniqueId().toString() + ".chat");
+					if (p.contains("group")) {
+						groupName = p.getString("group.title");
+					}
+					else {
+						player.sendMessage(ChatColor.RED + "You're not in a group!");
+						break;
+					}
+					
+					for (int i = 3; i < argv.length; i++)
+						msg += argv[i] + " ";
+					
+					ConfigurationSection group = plugin.chat.getConfig().getConfigurationSection("groups." + groupName);
 					switch(option) {
 					case "motd":
+						// Check if player has permission to give specified title
+						if (titles.indexOf(p.getString("group.title")) <= titles.indexOf("moderator")) {
+							group.set("motd", msg);
+						}
+						else {
+							player.sendMessage(ChatColor.RED + "Invalid permissions");
+						}
 						break;
 					case "policy":
+						// Check if player has permission to give specified title
+						if (titles.indexOf(p.getString("group.title")) == titles.indexOf("owner")) {
+							if (msg.length() == 1 && (msg.equalsIgnoreCase("open") || msg.equalsIgnoreCase("closed"))) {
+								group.set("policy", msg);
+							}
+							else {
+								player.sendMessage(ChatColor.RED + "Invalid policy");
+							}
+						}
+						else {
+							player.sendMessage(ChatColor.RED + "Invalid permissions");
+						}
 						break;
 					case "description":
+						// Check if player has permission to give specified title
+						if (titles.indexOf(p.getString("group.title")) <= titles.indexOf("moderator")) {
+							group.set("motd", msg);
+						}
+						else {
+							player.sendMessage(ChatColor.RED + "Invalid permissions");
+						}
 						break;
 					case "name":
+						// Check if player has permission to give specified title
+						if (titles.indexOf(p.getString("group.title")) == titles.indexOf("owner")) {
+							if (!plugin.chat.getConfig().contains("groups." + msg)) {
+								group.set("name", msg);
+							}
+							else {
+								player.sendMessage("Group name already in use");
+							}
+						}
+						else {
+							player.sendMessage(ChatColor.RED + "Invalid permissions");
+						}
 					}
 				}
 				break;
@@ -598,46 +933,6 @@ public class ChatHandler  {
 			default:
 				player.sendMessage(ChatColor.RED + "Invalid use of command. Type /chat help for more information");
 				break;
-			}
-			break;
-			
-		case "join":
-			/*
-			 * Ask to join group
-			 * If closed, need to be accepted
-			 * If open, join right away
-			 * 
-			 * Checks:
-			 * - If command sender is in a group
-			 */
-			
-			switch(type) {
-			case "group":
-				/*
-				 * Player request will be saved in a list where any mod or owner can
-				 * look at and accept at anytime
-				 * 
-				 * Checks
-				 * - If command sender is in a group
-				 * - If group exists
-				 * - If command sender has already requested an invite
-				 */
-				break;
-				
-			case "party":
-				/*
-				 * Player request will go directly to party owner
-				 * Player request will timeout after 2 minutes if no response
-				 * 
-				 * Checks
-				 * - If command sender is in a party
-				 * - If party exists
-				 * - If command sender ahs already requested an invite
-				 */
-				break;
-				
-			default:
-				player.sendMessage(ChatColor.RED + "Invalid use of command. Type /chat help for more information");
 			}
 			break;
 			
