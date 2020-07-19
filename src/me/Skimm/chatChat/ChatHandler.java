@@ -133,7 +133,8 @@ public class ChatHandler  {
 							
 							// Update player info
 							ConfigurationSection playerInfo = plugin.playerInfo.getConfig().getConfigurationSection("players." + player.getUniqueId().toString() + ".chat");
-							playerInfo.set("group", argv[2]);
+							playerInfo.set("group.name", argv[2]);
+							playerInfo.set("group.title", "owner");
 							
 							plugin.chat.saveConfig();
 							plugin.playerInfo.saveConfig();
@@ -419,7 +420,7 @@ public class ChatHandler  {
 			}
 			break;
 			
-		case "append":
+		case "append": // /chat append <party/group> <owner/moderator/member> <player>
 			/*
 			 * Append a player a title
 			 * Owner can give any title (Even owner)
@@ -438,6 +439,121 @@ public class ChatHandler  {
 				 * - If command sender has permissions to append title
 				 *  - Get list of titles, if player title index is smaller they have permission
 				 */
+				if (argv.length == 4) {
+					// Check if player is in a group
+					ConfigurationSection p = plugin.playerInfo.getConfig().getConfigurationSection("players." + player.getUniqueId().toString() + ".chat");
+					if (p.contains("group")) {
+						String groupName = p.getString("group.title");
+						List<String> groupMembers = plugin.chat.getConfig().getStringList("groups." + groupName + ".members");
+						
+						ArrayList<String> titles = new ArrayList<String>();
+						titles.add("owner");
+						titles.add("moderator");
+						titles.add("member");
+						
+						// Check if player has permission to give specified title
+						if (titles.indexOf(p.getString("group.title")) < titles.indexOf(argv[2].toLowerCase())) {
+							Player groupMember = null;
+							try {
+								groupMember = player.getServer().getPlayer(argv[3].toLowerCase());
+				    		}
+				    		catch (Exception e) {
+				    			player.sendMessage("Invalid player");
+				    			break;
+				    		}
+							
+							// Check if member is a member
+							if (groupMembers.contains(groupMember.getUniqueId().toString())) {
+								ConfigurationSection r = plugin.playerInfo.getConfig().getConfigurationSection("players." + groupMember.getUniqueId().toString() + ".chat");
+								String color = plugin.config.getConfig().getString("general.chat.chatModes.group.color");
+								
+								// Check if player is owner
+								if (titles.indexOf(p.getString("group.title")) == 0) {
+									
+									// Owner appending another owner
+									if (argv[2].toLowerCase().equalsIgnoreCase("owner")) {
+										plugin.chat.getConfig().set("groups." + groupName + ".ownerUUID", groupMember.getUniqueId().toString());
+										r.set("group.title", "owner");
+										p.set("group.title", "moderator");
+										
+										plugin.chat.saveConfig();
+										plugin.playerInfo.saveConfig();
+										
+										player.sendMessage(ChatColor.translateAlternateColorCodes('&', color + "You made " + groupMember.getDisplayName() + " owner of the group"));
+										groupMember.sendMessage(ChatColor.translateAlternateColorCodes('&', color + "You've been made owner of the group"));
+									}
+									// Owner appending any other title
+									else {
+										r.set("group.title", argv[2].toLowerCase());
+										plugin.playerInfo.saveConfig();
+										
+										player.sendMessage(ChatColor.translateAlternateColorCodes('&', color + "You made " + groupMember.getDisplayName() + " " + argv[2]));
+										groupMember.sendMessage(ChatColor.translateAlternateColorCodes('&', color + "You received the title " + argv[2]));
+									}
+								}
+								else {
+									// Player is below owner
+									// Check if player permission is above recipient permissions
+									if (titles.indexOf(p.getString("group.title")) < titles.indexOf(r.getString("group.title"))) {
+										r.set("group.title", argv[2].toLowerCase());
+										plugin.playerInfo.saveConfig();
+										
+										player.sendMessage(ChatColor.translateAlternateColorCodes('&', color + "You made " + groupMember.getDisplayName() + " " + argv[2]));
+										groupMember.sendMessage(ChatColor.translateAlternateColorCodes('&', color + "You received the title " + argv[2]));
+									}
+									else {
+										player.sendMessage(ChatColor.RED + "You do not have the correct permissions");
+									}
+								}
+							}
+							else {
+								player.sendMessage(ChatColor.RED + "Player is not in your group");
+							}
+						}
+						else {
+							player.sendMessage(ChatColor.RED + "You do not have permissions to do this");
+						}
+					}
+					else {
+						player.sendMessage(ChatColor.RED + "You're not in a group");
+					}
+				}
+				else {
+					player.sendMessage(ChatColor.RED + "Invalid use of command. Type /chat help for more information");
+					
+				}
+				break;
+			case "party":
+				if (argv.length == 3) {
+					// Check if player is in a party
+					if (plugin.playerInfo.getConfig().contains("players." + player.getUniqueId().toString() + ".chat.party")) {
+						// Check if player is the party leader
+						if (player.getUniqueId().toString().equals(plugin.playerInfo.getConfig().getString("players." + player.getUniqueId().toString() + ".chat.party"))) {
+							Player partyMember = null;
+							try {
+				    			partyMember = player.getServer().getPlayer(UUID.fromString(argv[2]));
+				    		}
+				    		catch (Exception e) {
+				    			player.sendMessage("Invalid player");
+				    			break;
+				    		}
+							
+							String color = plugin.config.getConfig().getString("general.chat.chatModes.party.color");
+							player.sendMessage(ChatColor.translateAlternateColorCodes('&', color + "Made " + partyMember.getDisplayName() + " party leader"));
+							partyMember.sendMessage(ChatColor.translateAlternateColorCodes('&', color + "You've been made party leader"));
+							
+						}
+						else {
+							player.sendMessage(ChatColor.RED + "You're not the party leader");
+						}
+					}
+					else {
+						player.sendMessage(ChatColor.RED + "You're not in a party!");
+					}
+				}
+				else {
+					player.sendMessage(ChatColor.RED + "Invalid use of command. Type /chat help for more information");
+				}
 				break;
 
 			default:
@@ -446,12 +562,10 @@ public class ChatHandler  {
 			}
 			break;
 			
-		case "edit":
+		case "edit": // /chat edit group <motd/policy/description/name> <new val>
 			/*
 			 * Edit group 
 			 * - MOTD (MODS AND ABOVE)
-			 * - Hostility (ONLY OWNER)
-			 *   - PvE or PvP
 			 * - Policy (ONLY OWNER)
 			 *   - Open
 			 *   - Closed
@@ -467,6 +581,18 @@ public class ChatHandler  {
 				 * - If command sender has permissions to edit
 				 * - If edit option is valid
 				 */
+				if (argv.length >= 4) {
+					String option = argv[2].toLowerCase();
+					switch(option) {
+					case "motd":
+						break;
+					case "policy":
+						break;
+					case "description":
+						break;
+					case "name":
+					}
+				}
 				break;
 
 			default:
