@@ -7,12 +7,15 @@ import java.util.UUID;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
+import org.bukkit.scheduler.BukkitTask;
 
 import me.Skimm.chatCommands.*;
 import net.md_5.bungee.api.ChatColor;
 
 public class ChatHandler  {
 	private Main plugin;
+	private RequestScheduler requestScheduler;
+	
 	ConfigurationSection section, p, r;
 	ArrayList<String> titles = new ArrayList<String>();
 	
@@ -136,7 +139,13 @@ public class ChatHandler  {
 							newGroup.set("members", members);
 							
 							List<String> requests = new ArrayList<String>();
-							newGroup.set("request", requests);
+							newGroup.set("requests", requests);
+							
+							List<String> invited = new ArrayList<String>();
+							newGroup.set("invited", invited);
+							
+							List<String> invitetimer = new ArrayList<String>();
+							newGroup.set("timers", invitetimer);
 							
 							// Update player info
 							ConfigurationSection playerInfo = plugin.playerInfo.getConfig().getConfigurationSection("players." + player.getUniqueId().toString() + ".chat");
@@ -162,7 +171,7 @@ public class ChatHandler  {
 				break;
 				
 			case "party":
-				/*
+				/*		
 				 * Checks
 				 * - If command sender is already in a party
 				 * - If name is specified (NO NAME)
@@ -174,6 +183,15 @@ public class ChatHandler  {
 						List<String> members = new ArrayList<String>();
 						members.add(player.getUniqueId().toString());
 						newParty.set("members", members);
+						
+						List<String> requests = new ArrayList<String>();
+						newParty.set("requests", requests);
+						
+						List<String> invited = new ArrayList<String>();
+						newParty.set("invited", invited);
+						
+						List<String> invitetimer = new ArrayList<String>();
+						newParty.set("timers", invitetimer);
 						
 						// Update player info
 						ConfigurationSection playerInfo = plugin.playerInfo.getConfig().getConfigurationSection("players." + player.getUniqueId().toString() + ".chat");
@@ -219,7 +237,7 @@ public class ChatHandler  {
 					color = plugin.config.getConfig().getString("general.chat.chatModes.group.color");
 					p = plugin.playerInfo.getConfig().getConfigurationSection("players." + player.getUniqueId().toString() + ".chat");
 					if (p.contains("group")) {
-						String groupName = p.getString("group.title");
+						String groupName = p.getString("group.name");
 						List<String> members = plugin.chat.getConfig().getStringList("groups." + groupName + ".members");
 						
 						// Check if player has permission to invite/kick
@@ -240,10 +258,12 @@ public class ChatHandler  {
 								// Kick player
 								if (command.equalsIgnoreCase("kick")) {
 									members.remove(member.getUniqueId().toString());
+									plugin.chat.getConfig().set("groups." + groupName + ".members", members);
+									
 									editMember.set("group", null);
 									
 									member.sendMessage(ChatColor.translateAlternateColorCodes('&', color + "You've been kicked from " + groupName));
-									break;
+									updateMode(member, "all");
 								}
 								else { // accept
 									player.sendMessage(ChatColor.RED + "Player is already in the group");
@@ -251,12 +271,12 @@ public class ChatHandler  {
 							}
 							// Player isn't in the group
 							else {
-								if (command.equalsIgnoreCase("accept")) {
-									members.add(member.getUniqueId().toString());
-									editMember.set("group.name", groupName);
-									editMember.set("title", "member");
-									
-									member.sendMessage(ChatColor.translateAlternateColorCodes('&', color + "Your join request to " + groupName + " has been accepted"));
+								if (command.equalsIgnoreCase("invite")) {
+									this.requestScheduler = new RequestScheduler(this.plugin, "group", groupName, player.getUniqueId().toString(), member.getUniqueId().toString());
+									@SuppressWarnings("unused")
+									BukkitTask task = requestScheduler.runTaskTimer(this.plugin, 0, 6000); // 6000 = 5 minute timer
+	
+									member.sendMessage(ChatColor.translateAlternateColorCodes('&', color + "You've been invited to " + groupName+ ". Type /chat join group " + groupName + " to join"));
 								}
 								else { // kick
 									player.sendMessage(ChatColor.RED + "Player isn't in the group");
@@ -317,13 +337,12 @@ public class ChatHandler  {
 							}
 							// Player isn't in the party
 							else {
-								if (command.equalsIgnoreCase("accept")) {
-									members.add(member.getUniqueId().toString());
-									plugin.chat.getConfig().set("parties." + player.getUniqueId() + ".members", members);
-									
-									editMember.set("party", player.getUniqueId().toString());
-									
-									member.sendMessage(ChatColor.translateAlternateColorCodes('&', color + "You've joined the party"));
+								if (command.equalsIgnoreCase("invite")) {
+									this.requestScheduler = new RequestScheduler(this.plugin, "party", player.getUniqueId().toString(), player.getUniqueId().toString(), member.getUniqueId().toString());
+									@SuppressWarnings("unused")
+									BukkitTask task = requestScheduler.runTaskTimer(this.plugin, 0, 6000); // 6000 = 5 minute timer
+	
+									member.sendMessage(ChatColor.translateAlternateColorCodes('&', color + "You've been invited to join " + stripName(player) + "'s party"));
 								}
 								else { // kick
 									player.sendMessage(ChatColor.RED + "Player isn't in the group");
@@ -353,7 +372,7 @@ public class ChatHandler  {
 			break;
 			
 		case "accept":
-		case "deny": // /chat <accept/deny> <group/party> <player>
+		case "deny": 
 			/*
 			 * Accept/Deny player invitation request
 			 */
@@ -363,7 +382,8 @@ public class ChatHandler  {
 			 * Need to look into this further
 			 */
 			
-			if (argv.length == 3) {
+			// Accept/deny join request
+			if (argv.length == 3) { // /chat <accept/deny> <group/party> <player>
 				switch(type) {
 				case "group":
 					/*
@@ -377,7 +397,7 @@ public class ChatHandler  {
 					color = plugin.config.getConfig().getString("general.chat.chatModes.group.color");
 					p = plugin.playerInfo.getConfig().getConfigurationSection("players." + player.getUniqueId().toString() + ".chat");
 					if (p.contains("group")) {
-						String groupName = p.getString("group.title");
+						String groupName = p.getString("group.name");
 						List<String> requests = plugin.chat.getConfig().getStringList("groups." + groupName + ".requests");
 						
 						// Check if player has permission to accept/deny requests
@@ -404,8 +424,10 @@ public class ChatHandler  {
 									
 									List<String> members = plugin.chat.getConfig().getStringList("groups." + groupName + ".members");
 									members.add(requestPlayer.getUniqueId().toString());
+									plugin.chat.getConfig().set("groups." + groupName + ".members", members);
+									plugin.chat.saveConfig();
 									
-									ConfigurationSection editPlayer = plugin.playerInfo.getConfig().getConfigurationSection("players." + requestPlayer.getUniqueId().toString() + ".chat.group");
+									ConfigurationSection editPlayer = plugin.playerInfo.getConfig().createSection("players." + requestPlayer.getUniqueId().toString() + ".chat.group");
 									editPlayer.set("title", "member");
 									editPlayer.set("name", groupName);
 									plugin.playerInfo.saveConfig();
@@ -413,7 +435,7 @@ public class ChatHandler  {
 									requestPlayer.sendMessage(ChatColor.translateAlternateColorCodes('&', color + "Your group request has been accepted"));
 								}
 								else {
-									requestPlayer.sendMessage(ChatColor.translateAlternateColorCodes('&', color + "Your group request has been denied"));
+									requestPlayer.sendMessage(ChatColor.RED + "Your group request has been denied");
 								}
 								
 								// Save changes
@@ -460,7 +482,27 @@ public class ChatHandler  {
 								plugin.chat.getConfig().set("groups." + player.getUniqueId().toString() + ".requests", requests);
 								plugin.chat.saveConfig();
 								
-								requestPlayer.sendMessage(ChatColor.translateAlternateColorCodes('&', color + "Your party request has been denied"));
+								if (command.equalsIgnoreCase("accept")) {
+									// Safety check incase player was accepted into another group
+									if (plugin.playerInfo.getConfig().contains("players." + requestPlayer.getUniqueId().toString() + ".chat.party")) {
+										player.sendMessage(ChatColor.RED + "Player belongs to another party");
+										break;
+									}
+									
+									List<String> members = plugin.chat.getConfig().getStringList("parties." + player.getUniqueId().toString() + ".members");
+									members.add(requestPlayer.getUniqueId().toString());
+									plugin.chat.getConfig().set("parties." + player.getUniqueId().toString() + ".members", members);
+									plugin.chat.saveConfig();
+									
+									ConfigurationSection editPlayer = plugin.playerInfo.getConfig().createSection("players." + requestPlayer.getUniqueId().toString() + ".chat");
+									editPlayer.set("party", player.getUniqueId().toString());
+									plugin.playerInfo.saveConfig();
+									
+									requestPlayer.sendMessage(ChatColor.translateAlternateColorCodes('&', color + "Your group request has been accepted"));
+								}
+								else {
+									requestPlayer.sendMessage(ChatColor.translateAlternateColorCodes('&', color + "Your party request has been denied"));
+								}
 							}
 							else {
 								player.sendMessage(ChatColor.RED + "Couldn't find specified player");
@@ -480,12 +522,66 @@ public class ChatHandler  {
 					break;
 				}
 			}
+			// Accept/deny invite request
+			else if (argv.length == 2) {
+				
+			}
 			else {
 				player.sendMessage(ChatColor.RED + "Invalid use of command. Type /chat help for more information");
 			}
 			break;
 		
-		case "requests":
+		case "members": // /chat members <group/party>
+			// Display all members in group or party
+			if (argv.length == 2) {
+				switch(type) {
+				case "group":
+					// Check if player is in a group
+					color = plugin.config.getConfig().getString("general.chat.chatModes.group.color");
+					p = plugin.playerInfo.getConfig().getConfigurationSection("players." + player.getUniqueId().toString() + ".chat");
+					if (p.contains("group")) {
+						String groupName = p.getString("group.name");
+						List<String> members = plugin.chat.getConfig().getStringList("groups." + groupName + ".members");
+						player.sendMessage(ChatColor.translateAlternateColorCodes('&', color + "Group members"));
+						
+						for (String memberUUID : members) {
+							String title = plugin.playerInfo.getConfig().getString("players." + memberUUID + ".chat.group.title");
+							Player member = (Player) Bukkit.getOfflinePlayer(UUID.fromString(memberUUID));
+							
+							player.sendMessage("- " + stripName(member) + ", " + title);
+						}
+					}
+					else {
+						player.sendMessage(ChatColor.RED + "You're not in a group");
+					}
+					break;
+					
+				case "party":
+					color = plugin.config.getConfig().getString("general.chat.chatModes.party.color");
+					p = plugin.playerInfo.getConfig().getConfigurationSection("players." + player.getUniqueId().toString() + ".chat");
+					if (p.contains("party")) {
+						String groupName = p.getString("party");
+						List<String> members = plugin.chat.getConfig().getStringList("groups." + groupName + ".members");
+						player.sendMessage(ChatColor.translateAlternateColorCodes('&', color + "Party members"));
+						for (String memberUUID : members) {
+							Player member = (Player) Bukkit.getOfflinePlayer(UUID.fromString(memberUUID));
+							
+							player.sendMessage("- " + stripName(member));
+						}
+					}
+					else {
+						player.sendMessage(ChatColor.RED + "You're not in a party");
+					}
+					break;
+					
+				}
+			}
+			else {
+				player.sendMessage(ChatColor.RED + "Invalid use of command. Type /chat help for more information");
+			}
+			break;
+		
+		case "requests": // /chat requests <group/party>
 			switch(type) {
 			case "group":
 				/*
@@ -496,14 +592,18 @@ public class ChatHandler  {
 				p = plugin.playerInfo.getConfig().getConfigurationSection("players." + player.getUniqueId().toString() + ".chat");
 				if (p.contains("group")) {
 					String groupName = p.getString("group.name");
+					player.sendMessage(groupName);
 					List<String> requests = plugin.chat.getConfig().getStringList("groups." + groupName + ".requests");
 					
-					// Check if player has permission to give specified title
-					if (titles.indexOf(p.getString("group.title")) < titles.indexOf(argv[2].toLowerCase())) {
+					// Check if player has permission to use command
+					for (String t : requests) {
+						player.sendMessage(t);
+					}
+					if (titles.indexOf(p.getString("group.title")) < 2) {
 						if (requests.size() > 0) {
 							player.sendMessage(ChatColor.AQUA + "Join requests for " + groupName);
 							for (String request : requests) {
-								player.sendMessage(ChatColor.DARK_AQUA + "- " + Bukkit.getServer().getPlayer(UUID.fromString(request)).getDisplayName());
+								player.sendMessage("- " + stripName(Bukkit.getServer().getPlayer(UUID.fromString(request))));
 							}
 						}
 						else {
@@ -533,7 +633,7 @@ public class ChatHandler  {
 						if (requests.size() > 0) {
 							player.sendMessage(ChatColor.AQUA + "Join requests for your party");
 							for (String request : requests) {
-								player.sendMessage(ChatColor.DARK_AQUA + "- " + Bukkit.getServer().getPlayer(UUID.fromString(request)).getDisplayName());
+								player.sendMessage("- " + stripName(Bukkit.getServer().getPlayer(UUID.fromString(request))));
 							}
 						}
 						else {
@@ -583,21 +683,11 @@ public class ChatHandler  {
 					color = plugin.config.getConfig().getString("general.chat.chatModes.group.color");
 					if (!plugin.playerInfo.getConfig().contains("players." + player.getUniqueId().toString() + ".chat.group")) {
 						if (plugin.chat.getConfig().contains("groups." + name)) {
-							String policy = plugin.chat.getConfig().getString("groups." + name + ".policy");
-							if (policy.equalsIgnoreCase("closed")) {
-								List<String> requests = plugin.chat.getConfig().getStringList("groups." + name + ".requests");
-								if (!requests.contains(player.getUniqueId().toString())) {
-									requests.add(player.getUniqueId().toString());
-									plugin.chat.getConfig().set("groups." + name + "requests", requests);
-									plugin.chat.saveConfig();
-									
-									player.sendMessage(ChatColor.translateAlternateColorCodes('&', color + "You've requested to join " + name));
-								}
-								else {
-									player.sendMessage(ChatColor.RED + "You've already requested to join this group");
-								}
-							}
-							else {
+							// Check if already invited
+							List<String> invited = plugin.chat.getConfig().getStringList("groups." + name + ".invited");
+							if (invited.contains(player.getUniqueId().toString())) {
+								requestScheduler.removeListing("group", name, player.getUniqueId().toString());
+
 								List<String> members = plugin.chat.getConfig().getStringList("groups." + name + ".members");
 								members.add(player.getUniqueId().toString());
 								plugin.chat.getConfig().set("groups." + name + ".members", members);
@@ -610,8 +700,47 @@ public class ChatHandler  {
 								
 								player.sendMessage(ChatColor.translateAlternateColorCodes('&', color + "You've joined " + name));
 								
-								String[] args = {player.getDisplayName().toString(), "has", "joined", "the", "group"};
-								this.commandHandler(player, "g", args);
+								for (String memberUUID : plugin.chat.getConfig().getStringList("groups." + name + ".members"))
+									Bukkit.getServer().getPlayer(UUID.fromString(memberUUID)).sendMessage(ChatColor.translateAlternateColorCodes('&', color + stripName(player) + color + " has joined the group"));
+							}
+							// Not invited, need to request
+							else {
+								String policy = plugin.chat.getConfig().getString("groups." + name + ".policy");
+								if (policy.equalsIgnoreCase("closed")) {
+									List<String> requests = plugin.chat.getConfig().getStringList("groups." + name + ".requests");
+									if (!requests.contains(player.getUniqueId().toString())) {
+										requests.add(player.getUniqueId().toString());
+										plugin.chat.getConfig().set("groups." + name + ".requests", requests);
+										plugin.chat.saveConfig();
+										
+										player.sendMessage(ChatColor.translateAlternateColorCodes('&', color + "You've requested to join " + name));
+										
+										for (String memberUUID : plugin.chat.getConfig().getStringList("groups." + name + ".members")) {
+											if (titles.indexOf(plugin.playerInfo.getConfig().getString("players." + memberUUID + ".chat.group.title")) <= 1) {
+												Player mod = (Player) Bukkit.getServer().getPlayer(UUID.fromString(memberUUID));
+												mod.sendMessage(ChatColor.translateAlternateColorCodes('&', color + stripName(player) + " has requested to join the group"));
+											}
+										}
+									}
+									else {
+										player.sendMessage(ChatColor.RED + "You've already requested to join this group");
+									}
+								}
+								else {
+									List<String> members = plugin.chat.getConfig().getStringList("groups." + name + ".members");
+									members.add(player.getUniqueId().toString());
+									plugin.chat.getConfig().set("groups." + name + ".members", members);
+									
+									plugin.playerInfo.getConfig().set("players." + player.getUniqueId().toString() + ".chat.group.name", name);
+									plugin.playerInfo.getConfig().set("players." + player.getUniqueId().toString() + ".chat.group.title", "member");
+									
+									plugin.playerInfo.saveConfig();
+									plugin.chat.saveConfig();
+									
+									player.sendMessage(ChatColor.translateAlternateColorCodes('&', color + "You've joined " + name));
+									for (String memberUUID : plugin.chat.getConfig().getStringList("groups." + name + ".members"))
+										Bukkit.getServer().getPlayer(UUID.fromString(memberUUID)).sendMessage(ChatColor.translateAlternateColorCodes('&', color + stripName(player) + color + " has joined the group"));
+								}
 							}
 						}
 						else {
@@ -653,8 +782,8 @@ public class ChatHandler  {
 									plugin.chat.saveConfig();
 									
 									color = plugin.config.getConfig().getString("general.chat.chatModes.party.color");
-									player.sendMessage(ChatColor.translateAlternateColorCodes('&', "You've requested to join " + partyMember.getDisplayName() +"'s party"));
-									partyMember.sendMessage(ChatColor.translateAlternateColorCodes('&', "Player " + player.getDisplayName() + " has requested to join your party"));	
+									player.sendMessage(ChatColor.translateAlternateColorCodes('&', "You've requested to join " + stripName(partyMember) +"'s party"));
+									partyMember.sendMessage(ChatColor.translateAlternateColorCodes('&', "Player " + stripName(player) + " has requested to join your party"));	
 								}
 								else {
 									player.sendMessage(ChatColor.RED + "You've already requested to join this party");
@@ -708,6 +837,14 @@ public class ChatHandler  {
 						
 						plugin.playerInfo.saveConfig();
 						plugin.chat.saveConfig();
+						
+						for (String memberUUID : members) {
+							Player member = (Player) Bukkit.getServer().getPlayer(UUID.fromString(memberUUID));
+							color = plugin.config.getConfig().getString("general.chat.chatModes.group.color");
+							member.sendMessage(ChatColor.translateAlternateColorCodes('&', color + stripName(player) + " has left the group"));
+						}
+						
+						updateMode(player, "all");
 					}
 					// Player is group owner
 					else {
@@ -721,6 +858,8 @@ public class ChatHandler  {
 							
 							plugin.playerInfo.saveConfig();
 							plugin.chat.saveConfig();
+							
+							updateMode(player, "all");
 						}
 						else {
 							player.sendMessage(ChatColor.RED + "There are still members left in the group");
@@ -815,9 +954,9 @@ public class ChatHandler  {
 					if (p.contains("group")) {
 						String groupName = p.getString("group.name");
 						List<String> groupMembers = plugin.chat.getConfig().getStringList("groups." + groupName + ".members");
-						
+
 						// Check if player has permission to give specified title
-						if (titles.indexOf(p.getString("group.title")) < titles.indexOf(argv[2].toLowerCase())) {
+						if (titles.indexOf(p.getString("group.title")) < titles.indexOf(argv[2].toLowerCase()) || titles.indexOf(p.getString("group.title")) == 0) {
 							Player groupMember = null;
 							try {
 								groupMember = player.getServer().getPlayer(argv[3].toLowerCase());
@@ -826,6 +965,11 @@ public class ChatHandler  {
 				    			player.sendMessage("Invalid player");
 				    			break;
 				    		}
+							
+							if (groupMember.getUniqueId().toString().equalsIgnoreCase(player.getUniqueId().toString())) {
+								player.sendMessage(ChatColor.RED + "You can't give yourself a new title");
+								break;
+							}
 							
 							// Check if member is a member
 							if (groupMembers.contains(groupMember.getUniqueId().toString())) {
@@ -844,7 +988,7 @@ public class ChatHandler  {
 										plugin.chat.saveConfig();
 										plugin.playerInfo.saveConfig();
 										
-										player.sendMessage(ChatColor.translateAlternateColorCodes('&', color + "You made " + groupMember.getDisplayName() + " owner of the group"));
+										player.sendMessage(ChatColor.translateAlternateColorCodes('&', color + "You made " + stripName(groupMember) + " owner of the group"));
 										groupMember.sendMessage(ChatColor.translateAlternateColorCodes('&', color + "You've been made owner of the group"));
 									}
 									// Owner appending any other title
@@ -852,7 +996,7 @@ public class ChatHandler  {
 										r.set("group.title", argv[2].toLowerCase());
 										plugin.playerInfo.saveConfig();
 										
-										player.sendMessage(ChatColor.translateAlternateColorCodes('&', color + "You made " + groupMember.getDisplayName() + " " + argv[2]));
+										player.sendMessage(ChatColor.translateAlternateColorCodes('&', color + "You made " + stripName(groupMember) + " " + argv[2]));
 										groupMember.sendMessage(ChatColor.translateAlternateColorCodes('&', color + "You received the title " + argv[2]));
 									}
 								}
@@ -863,7 +1007,7 @@ public class ChatHandler  {
 										r.set("group.title", argv[2].toLowerCase());
 										plugin.playerInfo.saveConfig();
 										
-										player.sendMessage(ChatColor.translateAlternateColorCodes('&', color + "You made " + groupMember.getDisplayName() + " " + argv[2]));
+										player.sendMessage(ChatColor.translateAlternateColorCodes('&', color + "You made " + stripName(groupMember) + " " + argv[2]));
 										groupMember.sendMessage(ChatColor.translateAlternateColorCodes('&', color + "You received the title " + argv[2]));
 									}
 									else {
@@ -904,7 +1048,7 @@ public class ChatHandler  {
 				    		}
 							
 							color = plugin.config.getConfig().getString("general.chat.chatModes.party.color");
-							player.sendMessage(ChatColor.translateAlternateColorCodes('&', color + "Made " + partyMember.getDisplayName() + " party leader"));
+							player.sendMessage(ChatColor.translateAlternateColorCodes('&', color + "Made " + stripName(partyMember) + " party leader"));
 							partyMember.sendMessage(ChatColor.translateAlternateColorCodes('&', color + "You've been made party leader"));
 							
 						}
@@ -935,7 +1079,6 @@ public class ChatHandler  {
 			 *   - Open
 			 *   - Closed
 			 * - Description (MODS AND ABOVE)
-			 * - Name (ONLY OWNER)
 			 */
 			
 			switch(type) {
@@ -961,13 +1104,17 @@ public class ChatHandler  {
 					
 					for (int i = 3; i < argv.length; i++)
 						msg += argv[i] + " ";
+					msg = msg.substring(0, msg.length() - 1);
+					
+					player.sendMessage(msg + "EXTRA");
 					
 					ConfigurationSection group = plugin.chat.getConfig().getConfigurationSection("groups." + groupName);
 					switch(option) {
 					case "motd":
 						// Check if player has permission to give specified title
 						if (titles.indexOf(p.getString("group.title")) <= titles.indexOf("moderator")) {
-							group.set("motd", msg);
+							group.set("MOTD", msg);
+							player.sendMessage(ChatColor.GREEN + "Updated MOTD to: " + msg);
 						}
 						else {
 							player.sendMessage(ChatColor.RED + "Invalid permissions");
@@ -976,8 +1123,9 @@ public class ChatHandler  {
 					case "policy":
 						// Check if player has permission to give specified title
 						if (titles.indexOf(p.getString("group.title")) == titles.indexOf("owner")) {
-							if (msg.length() == 1 && (msg.equalsIgnoreCase("open") || msg.equalsIgnoreCase("closed"))) {
+							if ((msg.equalsIgnoreCase("open") || msg.equalsIgnoreCase("closed"))) {
 								group.set("policy", msg);
+								player.sendMessage(ChatColor.GREEN + "Changed policy to: " + msg);
 							}
 							else {
 								player.sendMessage(ChatColor.RED + "Invalid policy");
@@ -990,26 +1138,15 @@ public class ChatHandler  {
 					case "description":
 						// Check if player has permission to give specified title
 						if (titles.indexOf(p.getString("group.title")) <= titles.indexOf("moderator")) {
-							group.set("motd", msg);
+							group.set("description", msg);
+							player.sendMessage(ChatColor.GREEN + "Updated group description to: " + msg);
 						}
 						else {
 							player.sendMessage(ChatColor.RED + "Invalid permissions");
 						}
 						break;
-					case "name":
-						// Check if player has permission to give specified title
-						if (titles.indexOf(p.getString("group.title")) == titles.indexOf("owner")) {
-							if (!plugin.chat.getConfig().contains("groups." + msg)) {
-								group.set("name", msg);
-							}
-							else {
-								player.sendMessage("Group name already in use");
-							}
-						}
-						else {
-							player.sendMessage(ChatColor.RED + "Invalid permissions");
-						}
 					}
+					plugin.chat.saveConfig();
 				}
 				break;
 

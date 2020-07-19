@@ -164,7 +164,6 @@ public class Main extends JavaPlugin implements Listener {
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
     	Player player = event.getPlayer();
-    	event.setJoinMessage("");
     	
     	// Check player titles
     	// If op give Admin which gives all trusted and user permissions + admin permissions
@@ -200,26 +199,29 @@ public class Main extends JavaPlugin implements Listener {
     		updateDisplayName(player, 2, null);
     	}
     	else {
-    		if (playerInfo.getConfig().contains("players." + player.getUniqueId().toString() + ".chat.group")) {
-    			String groupName = playerInfo.getConfig().getString("players." + player.getUniqueId().toString() + ".chat.group");
-				List<String> groupMembers = chat.getConfig().getStringList("groups." + groupName + ".members");
-				
-				// Send player group MOTD
-				player.sendMessage(ChatColor.GREEN + "Group MOTD: " + chat.getConfig().getString("groups." + groupName + ".MOTD"));
-				
-				// Notify all group members
-				for (String memberUUID : groupMembers) {
-					Player groupMember = null;
-					try {
-		    			groupMember = player.getServer().getPlayer(UUID.fromString(memberUUID));
-		    		}
-		    		catch (Exception e) {
-		    			continue;
-		    		}
+    		if (config.getConfig().getString("general.chat.removejoinnotif").equalsIgnoreCase("true")) {
+    			event.setJoinMessage("");
+	    		if (playerInfo.getConfig().contains("players." + player.getUniqueId().toString() + ".chat.group")) {
+	    			String groupName = playerInfo.getConfig().getString("players." + player.getUniqueId().toString() + ".chat.group.name");
+					List<String> groupMembers = chat.getConfig().getStringList("groups." + groupName + ".members");
 					
-					groupMember.sendMessage(ChatColor.translateAlternateColorCodes('&', config.getConfig().getString("general.chat.chatModes.group.color") + chatCommands.stripName(player) + " has joined the server!"));
+					// Send player group MOTD
+					player.sendMessage(ChatColor.GREEN + "Group MOTD: " + chat.getConfig().getString("groups." + groupName + ".MOTD"));
+					
+					// Notify all group members
+					for (String memberUUID : groupMembers) {
+						Player groupMember = null;
+						try {
+			    			groupMember = player.getServer().getPlayer(UUID.fromString(memberUUID));
+			    		}
+			    		catch (Exception e) {
+			    			continue;
+			    		}
+						
+						groupMember.sendMessage(ChatColor.translateAlternateColorCodes('&', config.getConfig().getString("general.chat.chatModes.group.color") + chatCommands.stripName(player) + " has joined the server!"));
+					}
 				}
-			}
+    		}
     	}
     }
     
@@ -230,24 +232,28 @@ public class Main extends JavaPlugin implements Listener {
     	playerInfo.getConfig().set("players." + player.getUniqueId().toString() + ".chat.mode", "all");
     	playerInfo.saveConfig();
     	
-    	// If player belongs to group
-    	if (playerInfo.getConfig().contains("players." + player.getUniqueId().toString() + ".chat.group")) {
-			String groupName = playerInfo.getConfig().getString("players." + player.getUniqueId().toString() + ".chat.group");
-			List<String> groupMembers = chat.getConfig().getStringList("groups." + groupName + ".members");
+    	if (config.getConfig().getString("general.chat.removeleavenotif").equalsIgnoreCase("true")) {
+    		event.setQuitMessage("");
+    		
+    		// If player belongs to group
+        	if (playerInfo.getConfig().contains("players." + player.getUniqueId().toString() + ".chat.group")) {
+    			String groupName = playerInfo.getConfig().getString("players." + player.getUniqueId().toString() + ".chat.group.name");
+    			List<String> groupMembers = chat.getConfig().getStringList("groups." + groupName + ".members");
 
-			// Notify all group members
-			for (String memberUUID : groupMembers) {
-				Player groupMember = null;
-				try {
-	    			groupMember = player.getServer().getPlayer(UUID.fromString(memberUUID));
-	    		}
-	    		catch (Exception e) {
-	    			continue;
-	    		}
-				
-				groupMember.sendMessage(ChatColor.translateAlternateColorCodes('&', config.getConfig().getString("general.chat.chatModes.group.color") + chatCommands.stripName(player) + " has left the server!"));
-			}
-		}
+    			// Notify all group members
+    			for (String memberUUID : groupMembers) {
+    				Player groupMember = null;
+    				try {
+    	    			groupMember = player.getServer().getPlayer(UUID.fromString(memberUUID));
+    	    		}
+    	    		catch (Exception e) {
+    	    			continue;
+    	    		}
+    				
+    				groupMember.sendMessage(ChatColor.translateAlternateColorCodes('&', config.getConfig().getString("general.chat.chatModes.group.color") + chatCommands.stripName(player) + " has left the server!"));
+    			}
+    		}
+    	}
     	
     	// Already have this function
     	if (playerInfo.getConfig().contains("players." + player.getUniqueId().toString() + ".chat.party")) {
