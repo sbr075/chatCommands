@@ -1,0 +1,15 @@
+# =============================================================== #
+# NB! There is nothing for you to edit in this file.
+# This file gets automatically updated when an associated command
+# is ran. 
+#
+# This file is responsible for holding all the information about all
+# current active groups and parties
+#
+# Group names are defined by the creator
+# Party names is the UUID of the creator
+# =============================================================== #
+
+groups:
+
+parties:

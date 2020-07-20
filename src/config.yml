@@ -1,0 +1,42 @@
+# ==================================================== #
+# CHAT
+#   "shoutdistance", max distance between player and receiver shout is heard
+#   "localdistance", max distance between player and receiver local is heard
+#   "maxpartycap", max number of players allowed in a party
+#   "removejoinotif", remove join notification for every player, only group members will see it then
+#   "removeleavenotif", remove leave notification for every player, only group members will see it then
+#  You can change the colors of each chat mode, be aware you need to enter valid modes or it will automatically set it to white
+#
+# BROADCAST
+#   "min_delay", minimum allowed delay between broadcasts repeating (ticks)
+#   "max_broadcasts", maximum allowed broadcasts at a time
+#   "current_broadcasts", number of broadcasts currently running # DO NOT EDIT THIS
+#
+
+general:
+  chat:
+    shoutdistance: 500
+    localdistance: 200
+    maxpartycap: 5
+    removejoinnotif: true
+    removeleavenotif: true
+    chatModes:
+      region:
+        color: "&f"
+      all:
+        color: "&f"
+      shout:
+        color: "&e"
+      whisper:
+        color: "&d"
+      party:
+        color: "&b"
+      group:
+        color: "&a"
+      local:
+        color: "&f"
+  broadcasts:
+    min_delay: 6000
+    max_broadcasts: 10
+    currenet_broadcasts: 0
+    
