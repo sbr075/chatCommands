@@ -2,6 +2,7 @@
 #
 # here you can add more permissions
 # NB! this requires you to change the src code
+# which can be found on 
 #
 # ======================================================= #
 
@@ -36,6 +37,17 @@ permissions:
         - emote.use
         - emote.send
         - emote.list
+        - chat.help
+        - chat.list
+        - chat.create
+        - chat.invite
+        - chat.kick
+        - chat.accept
+        - chat.deny
+        - chat.members
+        - chat.requests
+        - chat.join
+        - chat.leave
     trusted:
       parent:
         - user
@@ -72,6 +84,7 @@ permissions:
         - emote.admin
         - broadcast.admin
         - title.admin
+        - chat.admin
   emote:
     names:
       - emote.help
@@ -144,6 +157,39 @@ permissions:
   chat:
     names:
       - chat.admin
+      - chat.help
+      - chat.list
+      - chat.create
+      - chat.invite
+      - chat.kick
+      - chat.accept
+      - chat.deny
+      - chat.members
+      - chat.requests
+      - chat.join
+      - chat.leave
+    help:
+      - chat.help
+    list:
+      - chat.list
+    create:
+      - chat.create
+    invite:
+      - chat.invite
+    kick:
+      - chat.kick
+    accept:
+      - chat.accept
+    deny:
+      - chat.deny
+    members:
+      - chat.members
+    requests:
+      - chat.requests
+    join:
+      - chat.join
+    leave:
+      - chat.leave
   title:
     names:
       - title.admin

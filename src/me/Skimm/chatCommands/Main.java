@@ -151,9 +151,9 @@ public class Main extends JavaPlugin implements Listener {
     	Player player = event.getPlayer();
     	String curMode;
     	curMode = playerInfo.getConfig().getString("players." + player.getUniqueId().toString() + ".chat.mode");
-    	event.setCancelled(true); // Cancel event
     	
     	chatCommands.commandHandler(player, curMode, event.getMessage().split(" "));
+    	event.setCancelled(true);
     }
     
     /*
@@ -332,11 +332,11 @@ public class Main extends JavaPlugin implements Listener {
 					+ curName);
     		break;
     	case 2:
-    		modeColor = config.getConfig().getString("general.chat.chatModes." + newVal + ".color");
+    		modeColor = config.getConfig().getString("general.chat.chatModes." + curMode + ".color");
     		if (!modeColor.matches("^[&][A-Fa-f0-9]+$") || !(modeColor.length() == 2))
     			modeColor = "&f";
     		
-    		titleColor = permissions.getConfig().getString("permissions.titles.names." + newVal + ".color");
+    		titleColor = permissions.getConfig().getString("permissions.titles.names." + curTitle + ".color");
     		if (!titleColor.matches("^[&][A-Fa-f0-9]+$") || !(titleColor.length() == 2))
     			titleColor = "&f";
     		
@@ -444,7 +444,6 @@ public class Main extends JavaPlugin implements Listener {
     		case "help":
     			if (argv.length == 1) {
     				// titleName - user, admin
-    				player.sendMessage("label: " + label);
     				for (String titleName : commands.getConfig().getConfigurationSection("commands." + label.toLowerCase()).getKeys(false)) {
     					// Prevent normal players from seeing admin help tab
     					if (titleName.equalsIgnoreCase("admin")) {

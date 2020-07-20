@@ -107,33 +107,44 @@ commands:
         usage: "&b/chat help"
         description: "- Shows all available commands"
       mode:
-        usage: "&b/chat <mode>"
+        usage: "&b/<mode>"
         description: "- Change chat mode to specified mode"
       list:
-        usage: "&b/chat list"
-        description: "- Shows all available chat modes"
+        usage: "&b/chat list <groups/modes>"
+        description: "- Shows all available groups or chat modes"
       create:
         usage: "&b/chat create <group/party> <group name>"
         description: "- Create a group or party"
       invite:
-        usage: "&b/chat invite <player> <group/party>"
-        description: "- Invite specified player to group/party"
-      remove:
-        usage: "&b/chat remove <player> <group/party>"
-        description: "- Remove specified player from group/party"
+        usage: "&b/chat <invite/kick> <group/party> <player"
+        description: "- Invite or kick specified player to group/party"
+      accept:
+        usage: "&b/chat <accept/deny> <group/party> <player"
+        description: "- Accept or deny player join request"
+      join:
+        usage: "&b/chat join <group/party> <group name/player name>"
+        description: "- Join group or party"
       leave:
         usage: "&b/chat leave <group/party>"
         description: "- Leave your current group/party"
-      disband:
-        usage: "&b/chat disband <group name>"
-        description: "- Disband your group"
-      role:
-        usage: "&b/chat role <player> <trusted/member>"
+      members:
+        usage: "&b/chat members <group/party>"
+        description: "- Display all members of your group/party"
+      requests:
+        usage: "&b/chat requests <group/party>"
+        description: "- Display all request to your group/party"
+      append:
+        usage: "&b/chat append group <owner/moderator/member> <player>"
         description: "- Change a players role in your group"
+      edit:
+        usage: "&b/chat edit group <motd/policy/description> <new val>"
+        description: "- Change group information"
       extra:
         line1: "&aExtra information"
         line2: "&aOnly groups can be named"
         line3: "&aDisbanding kicks all players including yourself from the group"
+        line4: "&aFull mode name enters you into the mode, first letter sends on single message"
+        line5: "&aGroup policy is either <open/closed>, open lets anyone in"
   title:
     admin:
       header:
