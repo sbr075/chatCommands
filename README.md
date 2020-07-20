@@ -32,6 +32,46 @@ If you got any complaints or tips feel free to let me know.
  ### NB! Not all features are 100% guaranteed to make it in. I am working on this as a hobby but will try to include them all and more!
 
 ## Changelog
+### Version 0.5.1
+- This is an hotfix for the emote feature which got broken in 0.5.0
+### Version 0.5.0
+#### Update information
+- Update 0.5.0 brings with it the new Chat feature. This feature implements the creation of groups and parties. Owners and moderators can invite or kick other players to them. It also brings with it a revamped chatting system which removes the basic Minecraft one. Now the player talks in "modes". These modes are all from All to Whispers.
+#### Chat modes
+- All, talk to anyone anywhere
+- Region, talk to anyone in your world (Overworld, The Nether or The End)
+- Shout, shout a message to anyone within 500 blocks
+- Whisper, whisper a message to a player
+- Group, talk to the members of your group
+- Party, talk to the members of your group
+- Local, talk to anyone within 200 blocks of you
+**NB!** Shout and local numbers can be changed at any time in the config file
+#### Chat commands
+- Help
+  - **COMMAND**: /chat help
+- Mode
+  - **COMMAND**: /<mode>
+  - You can either send a single message in that mode with i.e /p <message> for party or enter the mode with i.e. /party <optional message>
+- List
+  - **COMMAND**: /chat list <group/modes>
+- Create
+  - **COMMAND**: /chat create <group/party> <group name>
+- Invite/kick
+  - **COMMAND**: /chat <invite/kick> <group/party> <player>
+- Accept/deny
+  - **COMMAND**: /chat <accept/deny> <group/party> <player>
+- join
+  - **COMMAND**: /chat join <group/party> <group name/player name>
+- Leave
+  - **COMMAND**: /chat leave <group/party>
+- Members
+  - **COMMAND**: /chat members <group/party>
+- Requests
+  - **COMMAND**: /chat requests <group/party>
+- Append
+  - **COMMAND**: /chat append group <owner/moderator/member> <new val>
+- Edit
+  - **COMMAND**: /chat edit group <motd/policy/description> <new val>
 ### Version 0.4.3
 - General
   - Fixed /<label> help command
