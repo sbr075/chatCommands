@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -256,7 +257,9 @@ public class Main extends JavaPlugin implements Listener {
     	}
     	
     	// Already have this function
-    	if (playerInfo.getConfig().contains("players." + player.getUniqueId().toString() + ".chat.party")) {
+    	// Check if player is in a party
+		String color = config.getConfig().getString("general.chat.chatModes.party.color");
+		if (playerInfo.getConfig().contains("players." + player.getUniqueId().toString() + ".chat.party")) {
 			// Check if player is party owner
 			String partyOwner = playerInfo.getConfig().getString("players." + player.getUniqueId().toString() + ".chat.party");
 			
@@ -264,16 +267,16 @@ public class Main extends JavaPlugin implements Listener {
 			
 			// Player is party owner
 			if (player.getUniqueId().toString().equalsIgnoreCase(partyOwner)) {
-				if (members.size() > 1) {
-					chat.getConfig().set("parties." + partyOwner, "parties." + members.get(1));
-				}
-				else {
-					chat.getConfig().set("parties." + partyOwner, null);
+				// Update all party member information
+				for (String memberUUID : chat.getConfig().getStringList("parties." + player.getUniqueId() + ".members")) {
+					Player member = (Player) Bukkit.getServer().getPlayer(UUID.fromString(memberUUID));
+					member.sendMessage(ChatColor.translateAlternateColorCodes('&', color + "Party has been disbanded!"));
+					
+					playerInfo.getConfig().set("players." + memberUUID + ".chat.party", null);
 				}
 				
-				// Update player info
-				playerInfo.getConfig().set("players." + player.getUniqueId().toString() + ".chat.party", null);
-				
+				chat.getConfig().set("parties." + partyOwner, null);
+
 				playerInfo.saveConfig();
 				chat.saveConfig();
 			}
@@ -282,6 +285,7 @@ public class Main extends JavaPlugin implements Listener {
 				// Remove player from members
 				members.remove(player.getUniqueId().toString());
 				chat.getConfig().set("parties." + partyOwner + ".members", members);
+				chat.getConfig().set("parties." + partyOwner + ".count", chat.getConfig().getInt("parties." + partyOwner + ".count") - 1);
 				
 				// Update player info
 				playerInfo.getConfig().set("players." + player.getUniqueId().toString() + ".chat.party", null);
@@ -426,13 +430,22 @@ public class Main extends JavaPlugin implements Listener {
     			
     		String command = "";
     		if (argv.length > 0) {
-    			// Check permissions of player
-        		if (!checkPermissions(player, label, argv[0].toLowerCase())) {
-        			player.sendMessage(ChatColor.RED + "You do not have permissions to use this command.\n If you believe this is a mistake contact a server administrator");
-        			return true;
-        		}
-        		
-        		command = argv[0].toLowerCase();
+    			boolean lMode = false;
+    			String[] modes = {"all", "a", "region", "r", "shout", "s", "whisper", "w", "group", "g", "party", "p", "local", "l"};
+    			for (String mode : modes) {
+    				if (mode.equalsIgnoreCase(label)) {
+    					lMode = true;
+    				}
+    			}
+    			if (!lMode) {
+	    			// Check permissions of player
+	        		if (!checkPermissions(player, label, argv[0].toLowerCase())) {
+	        			player.sendMessage(ChatColor.RED + "You do not have permissions to use this command.\n If you believe this is a mistake contact a server administrator");
+	        			return true;
+	        		}
+	        		
+	        		command = argv[0].toLowerCase();
+    			}
     		}
 
     		/* 
