@@ -219,7 +219,7 @@ public class Main extends JavaPlugin implements Listener {
 			    			continue;
 			    		}
 						
-						groupMember.sendMessage(ChatColor.translateAlternateColorCodes('&', config.getConfig().getString("general.chat.chatModes.group.color") + chatCommands.stripName(player) + " has joined the server!"));
+						groupMember.sendMessage(ChatColor.translateAlternateColorCodes('&', config.getConfig().getString("general.chat.chatModes.group.color") + stripName(player) + " has joined the server!"));
 					}
 				}
     		}
@@ -251,7 +251,7 @@ public class Main extends JavaPlugin implements Listener {
     	    			continue;
     	    		}
     				
-    				groupMember.sendMessage(ChatColor.translateAlternateColorCodes('&', config.getConfig().getString("general.chat.chatModes.group.color") + chatCommands.stripName(player) + " has left the server!"));
+    				groupMember.sendMessage(ChatColor.translateAlternateColorCodes('&', config.getConfig().getString("general.chat.chatModes.group.color") + stripName(player) + " has left the server!"));
     			}
     		}
     	}
@@ -294,6 +294,23 @@ public class Main extends JavaPlugin implements Listener {
 				chat.saveConfig();
 			}
 		}
+    }
+    
+    public String stripName(Player player) {
+    	String curName, curTitle, curMode;
+    	curTitle = playerInfo.getConfig().getString("players." + player.getUniqueId() + ".title").toLowerCase();
+    	curMode = playerInfo.getConfig().getString("players." + player.getUniqueId() + ".chat.mode").toLowerCase();
+    	
+    	// [&fMODE&f][&fTITLE&f] <NAME>
+    	// Remove title and chat mode text to get normal name
+    	try {
+    		curName = player.getDisplayName().substring(curTitle.length() + curMode.length() + 13, player.getDisplayName().length());
+    	}
+    	catch (StringIndexOutOfBoundsException e) {
+    		curName = player.getDisplayName();
+    	}
+    	
+    	return curName;
     }
     
     public void updateDisplayName(Player receiver, int option, String newVal) {

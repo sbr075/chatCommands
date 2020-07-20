@@ -57,7 +57,7 @@ commands:
         usage: "&b/broadcast add <name> <interval (s, m or h)> <runtime (s, m or h)> <message>"
         description: "- Add a message to be sent at specified interval"
       edit:
-        usage: "&b/broadcaste edit <name> <add runtime/message> <new value>"
+        usage: "&b/broadcast edit <name> <add runtime/message> <new value>"
         description: "- Edit values of already existing broadcast"
       remove:
         usage: "&b/broadcast remove <name>"
@@ -119,7 +119,7 @@ commands:
         usage: "&b/chat <invite/kick> <group/party> <player"
         description: "- Invite or kick specified player to group/party"
       accept:
-        usage: "&b/chat <accept/deny> <group/party> <player"
+        usage: "&b/chat <accept/deny> <group/party> <player>"
         description: "- Accept or deny player join request"
       join:
         usage: "&b/chat join <group/party> <group name/player name>"
@@ -206,7 +206,7 @@ commands:
         usage: "&b/emote remove <name>"
         description: "- Remove an emote"
       perm_list: 
-        usage: "&bemote permlist"
+        usage: "&b/emote permlist"
         description: "- Show all available permissions"
       extra: 
         line1: "&aNB! Use the option 'all' to give every online player the specified permission [NOT IN CURRENT VERSION]"

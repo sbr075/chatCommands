@@ -40,23 +40,6 @@ public class ChatHandler  {
     	
     	return true;
     }
-    
-    public String stripName(Player player) {
-    	String curName, curTitle, curMode;
-    	curTitle = plugin.playerInfo.getConfig().getString("players." + player.getUniqueId() + ".title").toLowerCase();
-    	curMode = plugin.playerInfo.getConfig().getString("players." + player.getUniqueId() + ".chat.mode").toLowerCase();
-    	
-    	// [&fMODE&f][&fTITLE&f] <NAME>
-    	// Remove title and chat mode text to get normal name
-    	try {
-    		curName = player.getDisplayName().substring(curTitle.length() + curMode.length() + 13, player.getDisplayName().length());
-    	}
-    	catch (StringIndexOutOfBoundsException e) {
-    		curName = player.getDisplayName();
-    	}
-    	
-    	return curName;
-    }
 	
 	public void commandHandler(Player player, String label, String argv[]) {
 		// Save command to string
@@ -342,7 +325,7 @@ public class ChatHandler  {
 									@SuppressWarnings("unused")
 									BukkitTask task = requestScheduler.runTaskTimer(this.plugin, 0, 6000); // 6000 = 5 minute timer
 	
-									member.sendMessage(ChatColor.translateAlternateColorCodes('&', color + "You've been invited to join " + stripName(player) + "'s party"));
+									member.sendMessage(ChatColor.translateAlternateColorCodes('&', color + "You've been invited to join " + plugin.stripName(player) + "'s party"));
 								}
 								else { // kick
 									player.sendMessage(ChatColor.RED + "Player isn't in the group");
@@ -548,7 +531,7 @@ public class ChatHandler  {
 							String title = plugin.playerInfo.getConfig().getString("players." + memberUUID + ".chat.group.title");
 							Player member = (Player) Bukkit.getOfflinePlayer(UUID.fromString(memberUUID));
 							
-							player.sendMessage("- " + stripName(member) + ", " + title);
+							player.sendMessage("- " + plugin.stripName(member) + ", " + title);
 						}
 					}
 					else {
@@ -566,7 +549,7 @@ public class ChatHandler  {
 						for (String memberUUID : members) {
 							Player member = (Player) Bukkit.getOfflinePlayer(UUID.fromString(memberUUID));
 							
-							player.sendMessage("- " + stripName(member));
+							player.sendMessage("- " + plugin.stripName(member));
 						}
 					}
 					else {
@@ -603,7 +586,7 @@ public class ChatHandler  {
 						if (requests.size() > 0) {
 							player.sendMessage(ChatColor.AQUA + "Join requests for " + groupName);
 							for (String request : requests) {
-								player.sendMessage("- " + stripName(Bukkit.getServer().getPlayer(UUID.fromString(request))));
+								player.sendMessage("- " + plugin.stripName(Bukkit.getServer().getPlayer(UUID.fromString(request))));
 							}
 						}
 						else {
@@ -633,7 +616,7 @@ public class ChatHandler  {
 						if (requests.size() > 0) {
 							player.sendMessage(ChatColor.AQUA + "Join requests for your party");
 							for (String request : requests) {
-								player.sendMessage("- " + stripName(Bukkit.getServer().getPlayer(UUID.fromString(request))));
+								player.sendMessage("- " + plugin.stripName(Bukkit.getServer().getPlayer(UUID.fromString(request))));
 							}
 						}
 						else {
@@ -701,7 +684,7 @@ public class ChatHandler  {
 								player.sendMessage(ChatColor.translateAlternateColorCodes('&', color + "You've joined " + name));
 								
 								for (String memberUUID : plugin.chat.getConfig().getStringList("groups." + name + ".members"))
-									Bukkit.getServer().getPlayer(UUID.fromString(memberUUID)).sendMessage(ChatColor.translateAlternateColorCodes('&', color + stripName(player) + color + " has joined the group"));
+									Bukkit.getServer().getPlayer(UUID.fromString(memberUUID)).sendMessage(ChatColor.translateAlternateColorCodes('&', color + plugin.stripName(player) + color + " has joined the group"));
 							}
 							// Not invited, need to request
 							else {
@@ -718,7 +701,7 @@ public class ChatHandler  {
 										for (String memberUUID : plugin.chat.getConfig().getStringList("groups." + name + ".members")) {
 											if (titles.indexOf(plugin.playerInfo.getConfig().getString("players." + memberUUID + ".chat.group.title")) <= 1) {
 												Player mod = (Player) Bukkit.getServer().getPlayer(UUID.fromString(memberUUID));
-												mod.sendMessage(ChatColor.translateAlternateColorCodes('&', color + stripName(player) + " has requested to join the group"));
+												mod.sendMessage(ChatColor.translateAlternateColorCodes('&', color + plugin.stripName(player) + " has requested to join the group"));
 											}
 										}
 									}
@@ -739,7 +722,7 @@ public class ChatHandler  {
 									
 									player.sendMessage(ChatColor.translateAlternateColorCodes('&', color + "You've joined " + name));
 									for (String memberUUID : plugin.chat.getConfig().getStringList("groups." + name + ".members"))
-										Bukkit.getServer().getPlayer(UUID.fromString(memberUUID)).sendMessage(ChatColor.translateAlternateColorCodes('&', color + stripName(player) + color + " has joined the group"));
+										Bukkit.getServer().getPlayer(UUID.fromString(memberUUID)).sendMessage(ChatColor.translateAlternateColorCodes('&', color + plugin.stripName(player) + color + " has joined the group"));
 								}
 							}
 						}
@@ -782,7 +765,7 @@ public class ChatHandler  {
 									requestScheduler.removeListing("party", partyMember.getUniqueId().toString(), player.getUniqueId().toString());
 									
 									for (String memberUUID : plugin.chat.getConfig().getStringList("parties." + partyMember.getUniqueId().toString() + ".members"))
-										Bukkit.getServer().getPlayer(UUID.fromString(memberUUID)).sendMessage(ChatColor.translateAlternateColorCodes('&', color + stripName(player) + color + " has joined the party"));
+										Bukkit.getServer().getPlayer(UUID.fromString(memberUUID)).sendMessage(ChatColor.translateAlternateColorCodes('&', color + plugin.stripName(player) + color + " has joined the party"));
 									
 									List<String> members = plugin.chat.getConfig().getStringList("parties." + partyMember.getUniqueId().toString() + ".members");
 									members.add(player.getUniqueId().toString());
@@ -804,8 +787,8 @@ public class ChatHandler  {
 										plugin.chat.saveConfig();
 										
 										color = plugin.config.getConfig().getString("general.chat.chatModes.party.color");
-										player.sendMessage(ChatColor.translateAlternateColorCodes('&', color + "You've requested to join " + stripName(partyMember) +"'s party"));
-										partyMember.sendMessage(ChatColor.translateAlternateColorCodes('&', color + "Player " + stripName(player) + " has requested to join your party"));	
+										player.sendMessage(ChatColor.translateAlternateColorCodes('&', color + "You've requested to join " + plugin.stripName(partyMember) +"'s party"));
+										partyMember.sendMessage(ChatColor.translateAlternateColorCodes('&', color + "Player " + plugin.stripName(player) + " has requested to join your party"));	
 									}
 									else {
 										player.sendMessage(ChatColor.RED + "You've already requested to join this party");
@@ -864,7 +847,7 @@ public class ChatHandler  {
 						for (String memberUUID : members) {
 							Player member = (Player) Bukkit.getServer().getPlayer(UUID.fromString(memberUUID));
 							color = plugin.config.getConfig().getString("general.chat.chatModes.group.color");
-							member.sendMessage(ChatColor.translateAlternateColorCodes('&', color + stripName(player) + " has left the group"));
+							member.sendMessage(ChatColor.translateAlternateColorCodes('&', color + plugin.stripName(player) + " has left the group"));
 						}
 						
 						updateMode(player, "all");
@@ -1014,7 +997,7 @@ public class ChatHandler  {
 										plugin.chat.saveConfig();
 										plugin.playerInfo.saveConfig();
 										
-										player.sendMessage(ChatColor.translateAlternateColorCodes('&', color + "You made " + stripName(groupMember) + " owner of the group"));
+										player.sendMessage(ChatColor.translateAlternateColorCodes('&', color + "You made " + plugin.stripName(groupMember) + " owner of the group"));
 										groupMember.sendMessage(ChatColor.translateAlternateColorCodes('&', color + "You've been made owner of the group"));
 									}
 									// Owner appending any other title
@@ -1022,7 +1005,7 @@ public class ChatHandler  {
 										r.set("group.title", argv[2].toLowerCase());
 										plugin.playerInfo.saveConfig();
 										
-										player.sendMessage(ChatColor.translateAlternateColorCodes('&', color + "You made " + stripName(groupMember) + " " + argv[2]));
+										player.sendMessage(ChatColor.translateAlternateColorCodes('&', color + "You made " + plugin.stripName(groupMember) + " " + argv[2]));
 										groupMember.sendMessage(ChatColor.translateAlternateColorCodes('&', color + "You received the title " + argv[2]));
 									}
 								}
@@ -1033,7 +1016,7 @@ public class ChatHandler  {
 										r.set("group.title", argv[2].toLowerCase());
 										plugin.playerInfo.saveConfig();
 										
-										player.sendMessage(ChatColor.translateAlternateColorCodes('&', color + "You made " + stripName(groupMember) + " " + argv[2]));
+										player.sendMessage(ChatColor.translateAlternateColorCodes('&', color + "You made " + plugin.stripName(groupMember) + " " + argv[2]));
 										groupMember.sendMessage(ChatColor.translateAlternateColorCodes('&', color + "You received the title " + argv[2]));
 									}
 									else {
@@ -1269,7 +1252,7 @@ public class ChatHandler  {
 					String curMode = plugin.playerInfo.getConfig().getString("players." + player.getUniqueId() + ".chat.mode").toLowerCase();
 			    	updateMode(player, "whisper");
 					
-					receiver.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.config.getConfig().getString("general.chat.chatModes." + label + ".color") + stripName(player) + " whispers to you: " + msg));
+					receiver.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.config.getConfig().getString("general.chat.chatModes." + label + ".color") + plugin.stripName(player) + " whispers to you: " + msg));
 				
 					plugin.playerInfo.getConfig().set("players." + player.getUniqueId() + ".chat.lastsent", receiver.getUniqueId().toString());
 					plugin.playerInfo.saveConfig();

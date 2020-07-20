@@ -1,12 +1,18 @@
 package me.Skimm.chatEmotes;
-
 import java.util.ArrayList;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 
+import me.Skimm.chatCommands.Main;
+
 public class MessageHandler {	
+	private Main plugin;
+	
+	public MessageHandler (Main plugin) {
+		this.plugin = plugin;
+	}
 
 	// Sends message out
 	private void msgSend(Player sender, String msg, String[] argv, int msgType) {
@@ -24,6 +30,7 @@ public class MessageHandler {
     	case 0: // receiver
     		receiver.sendMessage(msg);
 			break;	
+			
 		case 1: // sender
 			sender.sendMessage(msg);
 			break;
@@ -49,6 +56,7 @@ public class MessageHandler {
 	 */
     public void msgParser(Player sender, String[] argv, ArrayList<String> emoteAllInfo) {
     	int sBlank = 0, mcBlank = 0, mfBlank = 0;
+
     	for (int i = 1; i < emoteAllInfo.size(); i++) {    	
     		// Get receiver
 			Player receiver = null;
@@ -57,18 +65,18 @@ public class MessageHandler {
 	    			receiver = sender.getServer().getPlayer(argv[2]);
 	    		}
 	    		catch (Exception e) {
-	    			sender.sendMessage("Emote " + argv[1] + " is set up wrong or receiver doesn't exist, use /e edit to fix it");
+	    			sender.sendMessage("Emote " + argv[1] + " is set up wrong or receiver doesn't exist, use /emote edit to fix it");
 	    		}
 	    	}
 	    	
-	    	if (i <= 2) {
+	    	if (i < 4) {
 	    		if (argv.length == 3)
 	    			continue;
 	    		
 	    		if (emoteAllInfo.get(i).equalsIgnoreCase("<BLANK>")) {
     				sBlank++;
     				
-    				if (sBlank == 2) {
+    				if (sBlank == 3) {
     					sender.sendMessage(ChatColor.RED + "[WARNING]" + ChatColor.WHITE + " Emote '" + argv[1] + "' has no single target messages");
     					break;
     				}
@@ -79,33 +87,34 @@ public class MessageHandler {
 	    		if (argv.length == 2)
 	    			break;
 	    		
-	    		if (i > 2 && i <= 5) {
+	    		if (i < 7) {
 	    			if (Integer.parseInt(emoteAllInfo.get(0)) <= 0 || Integer.parseInt(emoteAllInfo.get(0)) < sender.getLocation().distance(receiver.getLocation()))
 	        			continue;
 	    			
 	    			if (emoteAllInfo.get(i).equalsIgnoreCase("<BLANK>")) {
 	    				mcBlank++;
+	    				
+	    				if (mcBlank == 3) {
+	    	    			sender.sendMessage(ChatColor.RED + "[WARNING]" + ChatColor.WHITE + " Emote '" + argv[1] + "' has no close mutli target messages");
+	    	    		}
 	    				continue;
 	    			}
 	    		}
-	    		else if (i > 5) {
+	    		else {
 	    			if (Integer.parseInt(emoteAllInfo.get(0)) > sender.getLocation().distance(receiver.getLocation()))
 	        			continue;
 	    			
 	    			if (emoteAllInfo.get(i).equalsIgnoreCase("<BLANK>")) {
 	    				mfBlank++;
+	    				
+	    				if (mfBlank == 3) {
+	    	    			sender.sendMessage(ChatColor.RED + "[WARNING]" + ChatColor.WHITE + " Emote '" + argv[1] + "' has no far multi target messages");
+	    	    		}
 	    				continue;
 	    			}
 	    		}
-	    		
-	    		if (mcBlank == 3) {
-	    			sender.sendMessage(ChatColor.RED + "[WARNING]" + ChatColor.WHITE + " Emote '" + argv[1] + "' has no close mutli target messages");
-	    		}
-	    		else if (mfBlank == 3) {
-	    			sender.sendMessage(ChatColor.RED + "[WARNING]" + ChatColor.WHITE + " Emote '" + argv[1] + "' has no far multi target messages");
-	    		}
 	    	}
-    		
+
 	    	// Split up and parse message for keywords
 			String msg = "";
     		String[] tokens = emoteAllInfo.get(i).split(" ");
@@ -149,10 +158,10 @@ public class MessageHandler {
         			}
         		}
         	}
-        	
+
         	if (sCount != 0 || rCount != 0)
         		thSplit.add(tmp);
-
+        	
         	// sCount and rCount is 0
         	switch(thSplit.size()) {
         	case 0: // No r or s
@@ -164,28 +173,31 @@ public class MessageHandler {
         		if (thSplit.get(0).equalsIgnoreCase("")) { // start
         			switch(sCount) {
         			case 0: // Only r
-        				msg = ChatColor.translateAlternateColorCodes('&', receiver.getDisplayName() + " " + thSplit.get(1));
+        				msg = ChatColor.translateAlternateColorCodes('&', plugin.stripName(receiver) + " " + thSplit.get(1));
         				break;
         				
         			case 1: // only s
-        				msg = ChatColor.translateAlternateColorCodes('&', sender.getDisplayName() + " " + thSplit.get(1));
+        				msg = ChatColor.translateAlternateColorCodes('&', plugin.stripName(sender) + " " + thSplit.get(1));
         				break;
         			}
         		}
         		else if (thSplit.get(1).equalsIgnoreCase("")) { // end
         			switch(sCount) {
         			case 0: // only r
-        				msg = ChatColor.translateAlternateColorCodes('&', thSplit.get(0) + "&f" + receiver.getDisplayName());
+        				msg = ChatColor.translateAlternateColorCodes('&', thSplit.get(0) + "&f" + plugin.stripName(receiver));
         				break;
         			case 1: // only s
-        				msg = ChatColor.translateAlternateColorCodes('&', thSplit.get(0) + "&f" + sender.getDisplayName());
+        				msg = ChatColor.translateAlternateColorCodes('&', thSplit.get(0) + "&f" + plugin.stripName(sender));
         				break;
         			}
         		}
         		else { // middle
         			switch(sCount) {
         			case 0:
-        				msg = ChatColor.translateAlternateColorCodes('&', thSplit.get(0) + "&f" + receiver.getDisplayName() + thSplit.get(1));
+        				msg = ChatColor.translateAlternateColorCodes('&', thSplit.get(0) + "&f" + plugin.stripName(receiver) + " " + thSplit.get(1));
+        				break;
+        			case 1:
+        				msg = ChatColor.translateAlternateColorCodes('&', thSplit.get(0) + "&f" + plugin.stripName(sender) + " " + thSplit.get(1));
         				break;
         			}
         		}
@@ -196,40 +208,40 @@ public class MessageHandler {
         		if (thSplit.get(0).equalsIgnoreCase("") && thSplit.get(2).equalsIgnoreCase("")) { // start end
         			switch(first) {
         			case 1: // s first
-        				msg = ChatColor.translateAlternateColorCodes('&', sender.getDisplayName() + " " + thSplit.get(1) + "&f" + receiver.getDisplayName());
+        				msg = ChatColor.translateAlternateColorCodes('&', plugin.stripName(sender) + " " + thSplit.get(1) + "&f" + plugin.stripName(receiver));
         				break;
         			case 2: // r first
-        				msg = ChatColor.translateAlternateColorCodes('&', receiver.getDisplayName() + " " + thSplit.get(1) + "&f" +  sender.getDisplayName());
+        				msg = ChatColor.translateAlternateColorCodes('&', plugin.stripName(receiver) + " " + thSplit.get(1) + "&f" +  plugin.stripName(sender));
         				break;
         			}
         		}
         		else if (thSplit.get(0).equalsIgnoreCase("")) { // start middle
         			switch(first) {
     	    		case 1: // s first
-    	    			msg = ChatColor.translateAlternateColorCodes('&', sender.getDisplayName() + " " + thSplit.get(1) + "&f" + receiver.getDisplayName()) + " " + thSplit.get(2);
+    	    			msg = ChatColor.translateAlternateColorCodes('&', plugin.stripName(sender) + " " + thSplit.get(1) + "&f" + plugin.stripName(receiver) + " " + thSplit.get(2));
     					break;
     				case 2: // r first
-    					msg = ChatColor.translateAlternateColorCodes('&', receiver.getDisplayName() + " " + thSplit.get(1) + "&f" + sender.getDisplayName()) + " " + thSplit.get(2);
+    					msg = ChatColor.translateAlternateColorCodes('&', plugin.stripName(receiver) + " " + thSplit.get(1) + "&f" + plugin.stripName(sender) + " " + thSplit.get(2));
     					break;
     				}
         		}
         		else if (thSplit.get(2).equalsIgnoreCase("")) { // middle end 
         			switch(first) {
     	    		case 1: // s first
-    	    			msg = ChatColor.translateAlternateColorCodes('&', thSplit.get(0) + "&f" +  sender.getDisplayName() + thSplit.get(1) + "&f" +  receiver.getDisplayName());
+    	    			msg = ChatColor.translateAlternateColorCodes('&', thSplit.get(0) + "&f" +  plugin.stripName(sender) + " " + thSplit.get(1) + "&f" + plugin.stripName(receiver));
     					break;
     				case 2: // r first
-    					msg = ChatColor.translateAlternateColorCodes('&', thSplit.get(0) + "&f" +  receiver.getDisplayName() + thSplit.get(1) + "&f" +  sender.getDisplayName());
+    					msg = ChatColor.translateAlternateColorCodes('&', thSplit.get(0) + "&f" +  plugin.stripName(receiver) + " " + thSplit.get(1) + "&f" +  plugin.stripName(sender));
     					break;
     				}
         		}
         		else { // middle middle
         			switch(first) {
     	    		case 1: // s first
-    	    			msg = ChatColor.translateAlternateColorCodes('&', thSplit.get(0) + "&f" + sender.getDisplayName() + " " + thSplit.get(1) + "&f" + receiver.getDisplayName() + " " + thSplit.get(2));
+    	    			msg = ChatColor.translateAlternateColorCodes('&', thSplit.get(0) + "&f" + plugin.stripName(sender) + " " + thSplit.get(1) + "&f" + plugin.stripName(receiver) + " " + thSplit.get(2));
     					break;
     				case 2: // r first
-    					msg = ChatColor.translateAlternateColorCodes('&', thSplit.get(0) + "&f" + receiver.getDisplayName() + " " + thSplit.get(1) + "&f" + sender.getDisplayName() + " " + thSplit.get(2));
+    					msg = ChatColor.translateAlternateColorCodes('&', thSplit.get(0) + "&f" + plugin.stripName(receiver) + " " + thSplit.get(1) + "&f" + plugin.stripName(sender) + " " + thSplit.get(2));
     					break;
     				}
         		}

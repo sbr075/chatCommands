@@ -14,11 +14,10 @@ public class EmoteHandler {
 	
 	public EmoteHandler(Main plugin) {
 		this.main = plugin;
+		this.msg = new MessageHandler(plugin);
 	}
 	
 	public void commandHandler(Player player, String label, String argv[]) {
-		this.msg = new MessageHandler();
-		
 		String command = argv[0].toLowerCase();
 		
 		switch (command) {

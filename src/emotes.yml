@@ -55,12 +55,12 @@ emotes:
     multiple:
       close:
         sender: s &dkisses r
-        receiver: Surprise! s &dkisses&f you
         broadcast: s &dkisses r
+        receiver: Surprise! s &dkisses&f you
       far:
         sender: You send a &dkiss&f to r
-        receiver: s throws you a &dkiss&f from afar
         broadcast: s sent a &dkiss&f to r
+        receiver: s throws you a &dkiss&f from afar
   cut:
     description: Cut yourself. Don't do this too often
     usage: /emote use cut
@@ -71,12 +71,12 @@ emotes:
     multiple:
       close:
         sender: <BLANK>
-        receiver: <BLANK>
         broadcast: <BLANK>
+        receiver: <BLANK>
       far:
         sender: <BLANK>
-        receiver: <BLANK>
         broadcast: <BLANK>
+        receiver: <BLANK>
   wave:
     description: Greet someone
     usage: /emote use wave <optional receiver>
@@ -87,12 +87,12 @@ emotes:
     multiple:
       close:
         sender: You &ewave&f to r
-        receiver: s &ewaves&f to you!
         broadcast: s &ewaves&f at r
+        receiver: s &ewaves&f to you!
       far:
         sender: Who are you &ewaving&f at? Try to find someone first
-        receiver: <BLANK>
         broadcast: <BLANK>
+        receiver: <BLANK>
   smile:
     description: Show off that beautiful smile
     usage: /emote use smile <optional receiver>
@@ -103,12 +103,12 @@ emotes:
     multiple:
       close:
         sender: You &esmiles&f towards r
-        receiver: s &esmiles&f at you
         broadcast: s &esmiles&f at r
+        receiver: s &esmiles&f at you
       far:
         sender: You &esmiles&f at r
-        receiver: s &esmiles&f at you
         broadcast: s &esmiles&f at r
+        receiver: s &esmiles&f at you
   flush:
     description: Warm up those cheeks
     usage: /emote use flush <optional receiver>
@@ -119,12 +119,12 @@ emotes:
     multiple:
       close:
         sender: You &cflush&f while looking at r
-        receiver: You notice s &cflushes&f while looking at you
         broadcast: s &cflushes&f at the thought of r
+        receiver: You notice s &cflushes&f while looking at you
       far:
         sender: You &cflush&f at the thought of r
-        receiver: Someone, somewhere, &cflushes&f at the thought of you
         broadcast: s &cflushes&f at the thought of r
+        receiver: Someone, somewhere, &cflushes&f at the thought of you
   laugh:
     description: Laugh at someone
     usage: /emote use laugh <optional receiver>
@@ -135,12 +135,12 @@ emotes:
     multiple:
       close:
         sender: You &elaugh&f at r
-        receiver: s &elaughs&f at you
         broadcast: s &elaughs&f at r
+        receiver: s &elaughs&f at you
       far:
         sender: You &elaugh&f at the thought of r
-        receiver: You get the feeling someone is &elaughing&f at you
         broadcast: s &elaughs&f at r
+        receiver: You get the feeling someone is &elaughing&f at you
   angry:
     description: Let your rage out
     usage: /emote use angry <optional receiver>
@@ -151,12 +151,12 @@ emotes:
     multiple:
       close:
         sender: <BLANK>
-        receiver: <BLANK>
         broadcast: <BLANK>
+        receiver: <BLANK>
       far:
         sender: You're &cangry&f at r
-        receiver: s is &cangry&f at you
         broadcast: s is &cangry&f at r
+        receiver: s is &cangry&f at you
   cry:
     description: Let those emotions out
     usage: /emote use cry
@@ -167,12 +167,12 @@ emotes:
     multiple:
       close:
         sender: <BLANK>
-        receiver: <BLANK>
         broadcast: <BLANK>
+        receiver: <BLANK>
       far:
         sender: <BLANK>
-        receiver: <BLANK>
         broadcast: <BLANK>
+        receiver: <BLANK>
   dance:
     description: Show off your moves!
     usage: /emote use dance <optional receiver>
@@ -183,12 +183,12 @@ emotes:
     multiple:
       close:
         sender: You try to impress r with your &3dance
-        receiver: s tries to impress you with their &3dance
         broadcast: s is showing their moves to r
+        receiver: s tries to impress you with their &3dance
       far:
         sender: r isn't looking at you
-        receiver: <BLANK>
         broadcast: <BLANK>
+        receiver: <BLANK>
   flirt:
     description: Sweet talk your way in
     usage: /emote use flirt <optional receiver>
@@ -199,12 +199,12 @@ emotes:
     multiple:
       close:
         sender: You &dflirt&f with r
-        receiver: s &dflirts&f with you
         broadcast: s &dflirts&f with r
+        receiver: s &dflirts&f with you
       far:
         sender: <BLANK>
-        receiver: <BLANK>
         broadcast: s sends a &dlove&f letter to r
+        receiver: <BLANK>
   pinch:
     description: Pinch someone or yourself
     usage: /emote use pinch <optional receiver>
@@ -215,12 +215,12 @@ emotes:
     multiple:
       close:
         sender: You &8pinch r
-        receiver: s &8pinches&f you
         broadcast: s &8pinches r
+        receiver: s &8pinches&f you
       far:
         sender: r is too far away
-        receiver: <BLANK>
         broadcast: <BLANK>
+        receiver: <BLANK>
         
 emote_commands:
   options:
